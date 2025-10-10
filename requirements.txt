@@ -1,0 +1,18 @@
+# Core FastAPI dependencies
+fastapi[all]==0.109.0
+uvicorn[standard]==0.27.0
+
+# Frontend
+streamlit==1.31.0
+
+# LLM Integration
+google-generativeai==0.3.2
+
+# Docker SDK
+docker==7.0.0
+
+# Configuration & Environment
+python-dotenv==1.0.0
+
+# HTTP requests (for Streamlit frontend)
+requests==2.31.0
