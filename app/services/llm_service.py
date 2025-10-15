@@ -6,15 +6,19 @@ Handles all interactions with Google Gemini API, including:
 - Function calling / tool use for Docker orchestration
 - Multi-turn conversation management
 - Agentic loop for complex tasks
+- Direct Notion API integration
 """
 
 import google.generativeai as genai
 import google.ai.generativelanguage as glm
+import requests
+import json
 from typing import List, Dict, Any, Optional
 from app.config import (
     GOOGLE_API_KEY,
     GEMINI_MODEL_PRIMARY,
     GEMINI_MODEL_FALLBACKS,
+    NOTION_TOKEN,
 )
 from app.services.docker_service import get_docker_service
 from app.logger import setup_logger
@@ -30,88 +34,83 @@ logger = setup_logger(__name__, log_file="logs/llm_service.log")
 
 class LanguageModelService:
     """
-    Service class for managing LLM interactions with tool-use capabilities.
+    Manages LLM interactions, including agentic tool use.
 
-    This class implements an "agentic loop" where the LLM can:
-    1. Decide when to use Docker tools
-    2. Execute commands in containers
-    3. Process results and generate natural responses
+    This service orchestrates the agentic loop where the LLM can decide to
+    use tools (like Docker commands), execute them, and process the results
+    to generate a final, natural language response. It also handles model
+
+    fallback for rate limit resilience.
     """
 
     def __init__(self):
         """
-        Initializes the Gemini client and configures available tools.
+        Initializes the Gemini client, configures tools, and sets up the model.
         """
         if not GOOGLE_API_KEY:
-            logger.error("Google API key not configured")
+            logger.error("Google API key not configured.")
             raise LLMConfigurationError(
-                "Google API key not configured. "
-                "Please set GOOGLE_API_KEY in your .env file"
+                "Google API key is missing. Please set it in your .env file."
             )
 
-        # Configure the Gemini API
+        # Configure the core Gemini API client.
         genai.configure(api_key=GOOGLE_API_KEY)
 
-        # Store system instruction and tool declarations
+        # Load system instructions and tool declarations from helper methods.
         self.system_instruction = self._get_system_instruction()
         self.tools = self._get_tool_declarations()
 
-        # Model fallback configuration
+        # Set up the primary model and a queue of fallbacks for resilience.
         self.current_model_name = GEMINI_MODEL_PRIMARY
         self.available_fallbacks = GEMINI_MODEL_FALLBACKS.copy()
 
-        # Initialize the model WITH tools configured
+        # Initialize the generative model with the tool configuration.
         self.model = genai.GenerativeModel(
             model_name=self.current_model_name, tools=self.tools
         )
 
-        # Get reference to Docker service
+        # Get a singleton instance of the Docker service for tool execution.
         self.docker_service = get_docker_service()
 
         logger.info(f"LLM Service initialized with model: {self.current_model_name}")
         logger.info(f"Fallback models available: {self.available_fallbacks}")
-        logger.debug(
-            "Docker tools registered: execute_command, list_containers, get_logs"
-        )
 
     def _get_system_instruction(self) -> str:
         """
-        Defines the system prompt that shapes the LLM's behavior.
+        Defines the system prompt that guides the LLM's behavior and tool use.
 
         Returns:
-            System instruction string
+            The system instruction string.
         """
-        return """You have access to Notion via MCP commands.
+        return """You are an AI agent with tools for Docker MCP and Notion API (v2022-06-28).
 
-Available tools:
-- execute_command(cmd) - Run MCP commands. Format: "tools call <TOOL> '<JSON>'"
-- list_containers()
-- get_logs(tail)
+**Tools:**
+- `execute_command(command)` - Docker MCP commands
+- `list_containers()` - List containers
+- `get_logs(container_name, tail)` - Container logs
+- `notion_api_call(method, endpoint, body)` - Direct Notion API (base: https://api.notion.com)
 
-Common Notion commands (pass to execute_command):
-- Search all: tools call API-post-search
-- Query DB: tools call API-post-database-query '{"database_id":"ID"}'
-- Create page: tools call API-post-page '{"parent":{"database_id":"ID"},"properties":{...}}'
-- Get page: tools call API-retrieve-a-page '{"page_id":"ID"}'
-- Get DB schema: tools call API-retrieve-a-database '{"database_id":"ID"}'
+**Notion API:**
+Full REST API access. Common patterns:
+- Search: POST /v1/search
+- Get database: GET /v1/databases/{id}
+- Update database: PATCH /v1/databases/{id}
+- Create page: POST /v1/pages
+- Update page: PATCH /v1/pages/{id}
+- Query database: POST /v1/databases/{id}/query
 
-When user asks to do something:
-1. Find what you need (search if needed)
-2. Do it
-3. Confirm
-
-Be proactive. Don't ask for IDs - find them yourself.
-
-IMPORTANT: When calling execute_command, pass ONLY the MCP command part.
-Example: execute_command("tools call API-post-search") NOT
-execute_command("docker mcp tools call...")"""
+Be proactive. Discover info yourself (search, get schemas). Include URLs in responses."""
 
     def _get_tool_declarations(self) -> List[Dict[str, Any]]:
         """
-        Declares the functions (tools) available to the LLM in the format expected by the older SDK.
+        Declares the functions (tools) available to the LLM.
+
+        This structure informs the LLM about the available functions, their
+        purpose, and their parameters, enabling it to make decisions about
+        when and how to call them.
 
         Returns:
-            List with tool declaration dictionary
+            A list containing the tool declaration dictionary for the Gemini API.
         """
         return [
             {
@@ -119,19 +118,18 @@ execute_command("docker mcp tools call...")"""
                     {
                         "name": "execute_command",
                         "description": (
-                            "Executes a shell command inside the MCP "
-                            "Docker container. Use this to interact with MCP "
-                            "tools, check files, run scripts, or perform any "
-                            "operation inside the container. Examples: "
-                            "'docker mcp server list', 'ls -la /app', "
-                            "'cat /etc/config'"
+                            "Executes a shell command to interact with the MCP "
+                            "gateway. Use this for all MCP-related operations."
                         ),
                         "parameters": {
                             "type": "OBJECT",
                             "properties": {
                                 "command": {
                                     "type": "STRING",
-                                    "description": "The shell command to execute in the container",
+                                    "description": (
+                                        "The MCP command to execute "
+                                        "(e.g., 'tools call API-post-search')."
+                                    ),
                                 }
                             },
                             "required": ["command"],
@@ -140,30 +138,64 @@ execute_command("docker mcp tools call...")"""
                     {
                         "name": "list_containers",
                         "description": (
-                            "Lists all Docker containers on the system "
-                            "(running and stopped). Use this to see what "
-                            "containers are available."
+                            "Lists all Docker containers on the system, running or stopped. "
+                            "Helps to identify available containers."
                         ),
                         "parameters": {"type": "OBJECT", "properties": {}},
                     },
                     {
                         "name": "get_logs",
+                        "description": "Retrieves recent logs from a specific Docker container.",
+                        "parameters": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "container_name": {
+                                    "type": "STRING",
+                                    "description": "The name of the container to get logs from.",
+                                },
+                                "tail": {
+                                    "type": "INTEGER",
+                                    "description": "Number of log lines to retrieve (default: 50).",
+                                },
+                            },
+                            "required": ["container_name"],
+                        },
+                    },
+                    {
+                        "name": "notion_api_call",
                         "description": (
-                            "Retrieves recent log output from the MCP "
-                            "container. Useful for debugging or checking "
-                            "container activity."
+                            "Makes a direct HTTP request to the Notion API. "
+                            "Use this to search, create, update, or query "
+                            "Notion databases and pages. "
+                            "Full API docs: "
+                            "https://developers.notion.com/reference"
                         ),
                         "parameters": {
                             "type": "OBJECT",
                             "properties": {
-                                "tail": {
-                                    "type": "INTEGER",
+                                "method": {
+                                    "type": "STRING",
                                     "description": (
-                                        "Number of log lines to retrieve "
-                                        "(default: 50)"
+                                        "HTTP method: GET, POST, PATCH, DELETE"
                                     ),
-                                }
+                                },
+                                "endpoint": {
+                                    "type": "STRING",
+                                    "description": (
+                                        "API endpoint path "
+                                        "(e.g., '/v1/search', "
+                                        "'/v1/databases/DATABASE_ID')"
+                                    ),
+                                },
+                                "body": {
+                                    "type": "STRING",
+                                    "description": (
+                                        "JSON body as a string "
+                                        "(use empty string '{}' for GET)"
+                                    ),
+                                },
                             },
+                            "required": ["method", "endpoint", "body"],
                         },
                     },
                 ]
@@ -172,47 +204,115 @@ execute_command("docker mcp tools call...")"""
 
     def _execute_function_call(self, function_name: str, args: Dict[str, Any]) -> str:
         """
-        Routes function calls from the LLM to the appropriate service method.
+        Routes LLM-initiated function calls to the appropriate service method.
+
+        This acts as a dispatcher, translating the LLM's intent into actual
+        application logic.
 
         Args:
-            function_name: Name of the function the LLM wants to call
-            args: Arguments for the function
+            function_name: The name of the function to call.
+            args: A dictionary of arguments for the function.
 
         Returns:
-            Result of the function execution as a string
+            The result of the function execution as a string.
         """
-        logger.info(f"LLM calling function: {function_name}")
-        logger.debug(f"Function arguments: {args}")
+        logger.info(f"LLM calling function: {function_name} with args: {args}")
 
         try:
             if function_name == "execute_command":
                 command = args.get("command", "")
-                result = self.docker_service.execute_mcp_command(command)
-                return result
+                if not command:
+                    return "Error: 'command' argument is required."
+                return self.docker_service.execute_mcp_command(command)
 
             elif function_name == "list_containers":
-                result = self.docker_service.list_containers()
-                return result
+                return self.docker_service.list_containers()
 
             elif function_name == "get_logs":
+                container_name = args.get("container_name")
+                if not container_name:
+                    return "Error: 'container_name' is a required argument."
                 tail = args.get("tail", 50)
-                result = self.docker_service.get_logs(tail=tail)
-                return result
+                return self.docker_service.get_logs(
+                    container_name=container_name, tail=tail
+                )
+
+            elif function_name == "notion_api_call":
+                method = args.get("method", "").upper()
+                endpoint = args.get("endpoint", "")
+                body_str = args.get("body", "{}")
+
+                if not method or not endpoint:
+                    return "Error: 'method' and 'endpoint' are required arguments."
+
+                if not NOTION_TOKEN:
+                    return "Error: NOTION_TOKEN not configured. Please add it to your .env file."
+
+                # Parse the body JSON string
+                try:
+                    body = json.loads(body_str) if body_str and body_str != "{}" else {}
+                except json.JSONDecodeError as e:
+                    return f"Error: Invalid JSON in body parameter: {str(e)}"
+
+                # Make the API call
+                url = f"https://api.notion.com{endpoint}"
+                headers = {
+                    "Authorization": f"Bearer {NOTION_TOKEN}",
+                    "Notion-Version": "2022-06-28",
+                    "Content-Type": "application/json",
+                }
+
+                logger.info(f"Making Notion API call: {method} {url}")
+
+                try:
+                    if method == "GET":
+                        response = requests.get(url, headers=headers, timeout=30)
+                    elif method == "POST":
+                        response = requests.post(
+                            url, headers=headers, json=body, timeout=30
+                        )
+                    elif method == "PATCH":
+                        response = requests.patch(
+                            url, headers=headers, json=body, timeout=30
+                        )
+                    elif method == "DELETE":
+                        response = requests.delete(url, headers=headers, timeout=30)
+                    else:
+                        return f"Error: Unsupported HTTP method '{method}'"
+
+                    # Return the response as a JSON string
+                    if response.status_code >= 200 and response.status_code < 300:
+                        result = response.json()
+                        logger.info(f"Notion API success: {response.status_code}")
+                        return json.dumps(result, indent=2)
+                    else:
+                        error_data = (
+                            response.json()
+                            if response.text
+                            else {"error": "No response body"}
+                        )
+                        logger.error(
+                            f"Notion API error: {response.status_code} - "
+                            f"{error_data}"
+                        )
+                        return f"Notion API Error ({response.status_code}): {json.dumps(error_data, indent=2)}"
+
+                except requests.exceptions.Timeout:
+                    return "Error: Notion API request timed out after 30 seconds."
+                except requests.exceptions.RequestException as e:
+                    return f"Error: Notion API request failed: {str(e)}"
 
             else:
-                error_msg = f"Unknown function '{function_name}'"
-                logger.error(error_msg)
-                return f"Error: {error_msg}"
+                return f"Error: Unknown function '{function_name}'."
 
         except (DockerCommandError, DockerTimeoutError) as e:
-            # Docker-specific errors - return as string to LLM
-            logger.warning(f"Docker error in function {function_name}: {str(e)}")
-            return f"Error: {str(e)}"
-
+            logger.error(f"Docker error during function call '{function_name}': {e}")
+            return f"Error executing Docker command: {e}"
         except Exception as e:
-            # Unexpected errors
-            logger.error(f"Unexpected error in function {function_name}: {str(e)}")
-            return f"Error: {str(e)}"
+            logger.error(
+                f"Unexpected error in function '{function_name}': {e}", exc_info=True
+            )
+            return f"An unexpected error occurred: {e}"
 
     def _switch_to_fallback_model(self) -> bool:
         """

@@ -9,6 +9,10 @@ FRONTEND_PID_FILE="$SCRIPT_DIR/runtime/frontend.pid"
 BACKEND_LOG="$SCRIPT_DIR/logs/backend.log"
 FRONTEND_LOG="$SCRIPT_DIR/logs/frontend.log"
 
+# Create runtime directories if they don't exist
+mkdir -p "$SCRIPT_DIR/runtime"
+mkdir -p "$SCRIPT_DIR/logs"
+
 # Use pyenv Python directly instead of broken venv
 PYTHON_BIN="/Users/gunnarhostetler/.pyenv/versions/3.12.9/bin/python"
 UVICORN_BIN="/Users/gunnarhostetler/.pyenv/versions/3.12.9/bin/uvicorn"

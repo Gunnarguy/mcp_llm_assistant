@@ -41,6 +41,15 @@ if not MCP_CONTAINER_NAME:
     raise ValueError("MCP_CONTAINER_NAME not found in environment variables.")
 
 
+# --- Notion API Configuration ---
+NOTION_TOKEN = os.getenv("NOTION_TOKEN")
+if not NOTION_TOKEN:
+    logger.warning("NOTION_TOKEN not configured!")
+    logger.warning("Get your token from: https://www.notion.so/my-integrations")
+    logger.warning("Notion integration features will be disabled")
+    NOTION_TOKEN = None
+
+
 # --- Application Configuration ---
 API_TITLE = "MCP LLM Assistant API"
 API_DESCRIPTION = (
