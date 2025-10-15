@@ -61,12 +61,14 @@ CUSTOM_CSS = """
 
     * {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        color: #f0f0f0;
     }
 
     /* Main app styling - Dark cyberpunk gradient */
     .stApp {
         background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
         background-attachment: fixed;
+        color: #f0f0f0;
     }
 
     /* Animated background particles */
@@ -92,44 +94,70 @@ CUSTOM_CSS = """
 
     /* Chat messages - Glassmorphism */
     .stChatMessage {
-        background: rgba(255, 255, 255, 0.03) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(20px);
         border-radius: 16px !important;
         padding: 1.5rem !important;
         margin: 1rem 0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.15) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        color: #f0f0f0 !important;
     }
 
     .stChatMessage:hover {
-        background: rgba(255, 255, 255, 0.06) !important;
-        border-color: rgba(99, 102, 241, 0.4) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(99, 102, 241, 0.5) !important;
         transform: translateY(-4px) scale(1.01) !important;
-        box-shadow: 0 12px 48px rgba(99, 102, 241, 0.3) !important;
+        box-shadow: 0 12px 48px rgba(99, 102, 241, 0.4) !important;
     }
 
     /* User message - Purple gradient */
     .stChatMessage[data-testid*="user"] {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%) !important;
-        border-left: 3px solid #6366F1 !important;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%) !important;
+        border-left: 4px solid #8B5CF6 !important;
     }
 
     /* Assistant message - Blue gradient */
     .stChatMessage[data-testid*="assistant"] {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%) !important;
-        border-left: 3px solid #3B82F6 !important;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(147, 51, 234, 0.25) 100%) !important;
+        border-left: 4px solid #60A5FA !important;
+    }
+
+    /* Message content text */
+    .stChatMessage p, .stChatMessage div, .stChatMessage span {
+        color: #f0f0f0 !important;
+    }
+
+    .stChatMessage code {
+        color: #fbbf24 !important;
+        background: rgba(0, 0, 0, 0.4) !important;
     }
 
     /* Sidebar styling - Premium dark */
     section[data-testid="stSidebar"] {
         background: linear-gradient(180deg, #0f1729 0%, #0a0e27 100%) !important;
-        border-right: 1px solid rgba(99, 102, 241, 0.2) !important;
-        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3) !important;
+        border-right: 1px solid rgba(99, 102, 241, 0.3) !important;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4) !important;
     }
 
     section[data-testid="stSidebar"] > div {
         background: transparent !important;
+    }
+
+    /* Sidebar text */
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] div,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label {
+        color: #e5e7eb !important;
+    }
+
+    section[data-testid="stSidebar"] h1,
+    section[data-testid="stSidebar"] h2,
+    section[data-testid="stSidebar"] h3,
+    section[data-testid="stSidebar"] h4 {
+        color: #f0f0f0 !important;
     }
 
     /* Buttons - Gradient with glow */
@@ -183,18 +211,22 @@ CUSTOM_CSS = """
     /* Input fields - Futuristic */
     .stTextInput input, .stTextArea textarea, .stNumberInput input {
         border-radius: 12px !important;
-        border: 2px solid rgba(99, 102, 241, 0.3) !important;
-        background: rgba(255, 255, 255, 0.03) !important;
+        border: 2px solid rgba(99, 102, 241, 0.4) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(10px) !important;
-        color: #e5e7eb !important;
+        color: #f0f0f0 !important;
         padding: 0.75rem 1rem !important;
         transition: all 0.3s ease !important;
     }
 
     .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus {
-        border-color: #6366F1 !important;
-        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.3) !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: #8B5CF6 !important;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 0 20px rgba(139, 92, 246, 0.4) !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .stTextInput input::placeholder, .stTextArea textarea::placeholder {
+        color: #9ca3af !important;
     }
 
     /* Alert boxes - Enhanced */
@@ -236,7 +268,7 @@ CUSTOM_CSS = """
 
     /* Headings - Animated gradient text */
     h1 {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f0abfc 100%) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
@@ -247,14 +279,32 @@ CUSTOM_CSS = """
     }
 
     h2 {
-        color: #e5e7eb !important;
+        color: #f0f0f0 !important;
         font-weight: 700 !important;
         letter-spacing: -0.01em !important;
     }
 
     h3 {
+        color: #e5e7eb !important;
+        font-weight: 600 !important;
+    }
+
+    h4 {
         color: #d1d5db !important;
         font-weight: 600 !important;
+    }
+
+    p {
+        color: #e5e7eb !important;
+    }
+
+    /* Labels and captions */
+    label {
+        color: #d1d5db !important;
+    }
+
+    .stCaption {
+        color: #9ca3af !important;
     }
 
     @keyframes gradient-shift {
@@ -317,22 +367,22 @@ CUSTOM_CSS = """
 
     /* Metrics - Card style */
     div[data-testid="stMetric"] {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
         padding: 1.25rem !important;
         border-radius: 12px !important;
-        border: 1px solid rgba(99, 102, 241, 0.2) !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
         backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
         transition: all 0.3s ease !important;
     }
 
     div[data-testid="stMetric"]:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
     }
 
     div[data-testid="stMetric"] label {
-        color: #9ca3af !important;
+        color: #d1d5db !important;
         font-size: 0.875rem !important;
         font-weight: 600 !important;
         text-transform: uppercase !important;
@@ -340,9 +390,13 @@ CUSTOM_CSS = """
     }
 
     div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-        color: #e5e7eb !important;
+        color: #f0f0f0 !important;
         font-size: 2rem !important;
         font-weight: 700 !important;
+    }
+
+    div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
+        color: #a5b4fc !important;
     }
 
     /* Spinner - Cyberpunk */
@@ -355,17 +409,25 @@ CUSTOM_CSS = """
     /* Chat input - Floating */
     .stChatInput {
         border-radius: 16px !important;
-        border: 2px solid rgba(99, 102, 241, 0.3) !important;
-        background: rgba(255, 255, 255, 0.05) !important;
+        border: 2px solid rgba(139, 92, 246, 0.4) !important;
+        background: rgba(255, 255, 255, 0.08) !important;
         backdrop-filter: blur(20px) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
         transition: all 0.3s ease !important;
     }
 
     .stChatInput:focus-within {
-        border-color: #6366F1 !important;
-        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4), 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+        border-color: #8B5CF6 !important;
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.5), 0 0 0 4px rgba(139, 92, 246, 0.2) !important;
         transform: translateY(-2px);
+    }
+
+    .stChatInput input {
+        color: #f0f0f0 !important;
+    }
+
+    .stChatInput input::placeholder {
+        color: #9ca3af !important;
     }
 
     /* Scrollbar - Sleek */
@@ -458,14 +520,57 @@ CUSTOM_CSS = """
 
     /* Link styling */
     a {
-        color: #818cf8 !important;
+        color: #a5b4fc !important;
         text-decoration: none !important;
         transition: all 0.3s ease !important;
+        font-weight: 500 !important;
     }
 
     a:hover {
+        color: #c7d2fe !important;
+        text-shadow: 0 0 10px rgba(165, 180, 252, 0.5) !important;
+    }
+
+    /* Markdown content in chat */
+    .stMarkdown {
+        color: #e5e7eb !important;
+    }
+
+    .stMarkdown p {
+        color: #e5e7eb !important;
+        line-height: 1.7 !important;
+    }
+
+    .stMarkdown li {
+        color: #e5e7eb !important;
+    }
+
+    .stMarkdown strong {
+        color: #f0f0f0 !important;
+        font-weight: 700 !important;
+    }
+
+    .stMarkdown em {
+        color: #d1d5db !important;
+    }
+
+    /* Blockquotes */
+    blockquote {
+        border-left: 4px solid #8B5CF6 !important;
+        padding-left: 1rem !important;
+        color: #d1d5db !important;
+        background: rgba(139, 92, 246, 0.1) !important;
+        border-radius: 4px !important;
+        margin: 1rem 0 !important;
+    }
+
+    /* Lists */
+    ul, ol {
+        color: #e5e7eb !important;
+    }
+
+    li::marker {
         color: #a5b4fc !important;
-        text-shadow: 0 0 10px rgba(129, 140, 248, 0.5) !important;
     }
 </style>
 """
