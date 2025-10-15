@@ -23,6 +23,14 @@ start_backend() {
         fi
     fi
 
+    # Auto-cleanup: Kill anything blocking port 8000
+    BLOCKING=$(lsof -ti:8000 2>/dev/null)
+    if [ -n "$BLOCKING" ]; then
+        echo "🧹 Auto-cleaning port 8000 (processes: $BLOCKING)..."
+        echo "$BLOCKING" | xargs kill -9 2>/dev/null
+        sleep 1
+    fi
+
     echo "🚀 Starting backend daemon..."
     cd "$SCRIPT_DIR"
     nohup "$UVICORN_BIN" app.main:app --host 0.0.0.0 --port 8000 >> "$BACKEND_LOG" 2>&1 &
@@ -32,7 +40,7 @@ start_backend() {
     if curl -s http://127.0.0.1:8000/health > /dev/null; then
         echo "✅ Backend running (PID: $(cat $BACKEND_PID_FILE))"
     else
-        echo "❌ Backend failed to start"
+        echo "❌ Backend failed to start - check logs: $BACKEND_LOG"
         return 1
     fi
 }
@@ -44,6 +52,14 @@ start_frontend() {
             echo "⚠️  Frontend already running (PID: $PID)"
             return 0
         fi
+    fi
+
+    # Auto-cleanup: Kill anything blocking port 8501
+    BLOCKING=$(lsof -ti:8501 2>/dev/null)
+    if [ -n "$BLOCKING" ]; then
+        echo "🧹 Auto-cleaning port 8501 (processes: $BLOCKING)..."
+        echo "$BLOCKING" | xargs kill -9 2>/dev/null
+        sleep 1
     fi
 
     echo "🎨 Starting frontend daemon..."
@@ -108,13 +124,18 @@ show_status() {
     echo "📊 MCP Assistant Status"
     echo "======================="
 
+    BACKEND_HEALTHY=false
+    FRONTEND_HEALTHY=false
+
     if [ -f "$BACKEND_PID_FILE" ]; then
         PID=$(cat "$BACKEND_PID_FILE")
         if ps -p $PID > /dev/null 2>&1; then
             echo "✅ Backend: Running (PID: $PID)"
             echo "   URL: http://127.0.0.1:8000"
+            BACKEND_HEALTHY=true
         else
             echo "❌ Backend: Not running (stale PID file)"
+            rm "$BACKEND_PID_FILE" 2>/dev/null
         fi
     else
         echo "❌ Backend: Not running"
@@ -125,8 +146,10 @@ show_status() {
         if ps -p $PID > /dev/null 2>&1; then
             echo "✅ Frontend: Running (PID: $PID)"
             echo "   URL: http://localhost:8501"
+            FRONTEND_HEALTHY=true
         else
             echo "❌ Frontend: Not running (stale PID file)"
+            rm "$FRONTEND_PID_FILE" 2>/dev/null
         fi
     else
         echo "❌ Frontend: Not running"
@@ -136,6 +159,12 @@ show_status() {
     echo "Logs:"
     echo "  Backend:  tail -f $BACKEND_LOG"
     echo "  Frontend: tail -f $FRONTEND_LOG"
+
+    # Auto-fix suggestion
+    if [ "$BACKEND_HEALTHY" = false ] || [ "$FRONTEND_HEALTHY" = false ]; then
+        echo ""
+        echo "💡 Tip: Run './daemon.sh start' to fix any stopped services"
+    fi
 }
 
 case "$1" in
@@ -162,7 +191,7 @@ case "$1" in
         echo ""
         stop_backend
         stop_frontend
-        sleep 1
+        sleep 2  # Give ports time to fully release
         start_backend
         start_frontend
         ;;
