@@ -1,8 +1,14 @@
 """
-Pydantic Schemas for API Data Validation
+Pydantic Schemas for API Data Validation - Enhanced Edition
 
 These models define the structure of JSON data for API requests and responses,
 ensuring type safety and automatic validation.
+
+Features:
+- Comprehensive field validation
+- Rich examples for documentation
+- Optional fields with defaults
+- Type hints for IDE support
 """
 
 from pydantic import BaseModel, Field
@@ -16,6 +22,9 @@ class ChatMessage(BaseModel):
 
     role: str = Field(..., description="Either 'user' or 'assistant'")
     content: str = Field(..., description="The message content")
+    timestamp: Optional[str] = Field(
+        None, description="ISO format timestamp of the message"
+    )
 
 
 class ChatRequest(BaseModel):
@@ -58,10 +67,38 @@ class ChatResponse(BaseModel):
 class HealthCheckResponse(BaseModel):
     """
     Response model for the health check endpoint.
+    Provides comprehensive system health information.
     """
 
-    status: str
-    docker_connected: bool
-    llm_configured: bool
-    container_name: Optional[str] = None
-    container_status: Optional[str] = None
+    status: str = Field(
+        ..., description="Overall system status: healthy, partial, or unhealthy"
+    )
+    docker_connected: bool = Field(
+        ..., description="Docker service connectivity status"
+    )
+    llm_configured: bool = Field(..., description="LLM service configuration status")
+    container_name: Optional[str] = Field(
+        None, description="Name of the MCP container or gateway"
+    )
+    container_status: Optional[str] = Field(
+        None, description="Status of the Docker container"
+    )
+    model: Optional[str] = Field(None, description="Active LLM model name")
+    environment: Optional[str] = Field(
+        None, description="Current environment (development/production)"
+    )
+    version: Optional[str] = Field(None, description="Application version")
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": "healthy",
+                "docker_connected": True,
+                "llm_configured": True,
+                "container_name": "MCP Docker Gateway",
+                "container_status": "running",
+                "model": "gemini-2.5-flash",
+                "environment": "development",
+                "version": "2.0.0",
+            }
+        }
