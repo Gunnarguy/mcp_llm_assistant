@@ -56,191 +56,416 @@ HEALTH_URL = "http://127.0.0.1:8000/health"
 # --- Custom CSS for Beautiful UI ---
 CUSTOM_CSS = """
 <style>
-    /* Main app styling */
-    .stApp {
-        background: linear-gradient(135deg, #0E1117 0%, #1a1d29 100%);
+    /* Import modern font */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    /* Chat messages */
+    /* Main app styling - Dark cyberpunk gradient */
+    .stApp {
+        background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
+        background-attachment: fixed;
+    }
+
+    /* Animated background particles */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image:
+            radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 20%, rgba(167, 139, 250, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+        animation: particles 20s ease-in-out infinite;
+    }
+
+    @keyframes particles {
+        0%, 100% { opacity: 0.3; transform: scale(1); }
+        50% { opacity: 0.6; transform: scale(1.1); }
+    }
+
+    /* Chat messages - Glassmorphism */
     .stChatMessage {
-        background-color: rgba(255, 255, 255, 0.05);
-        border-radius: 12px;
-        padding: 1rem;
-        margin: 0.5rem 0;
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(20px);
+        border-radius: 16px !important;
+        padding: 1.5rem !important;
+        margin: 1rem 0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     }
 
     .stChatMessage:hover {
-        background-color: rgba(255, 255, 255, 0.08);
-        border-color: rgba(79, 70, 229, 0.5);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+        background: rgba(255, 255, 255, 0.06) !important;
+        border-color: rgba(99, 102, 241, 0.4) !important;
+        transform: translateY(-4px) scale(1.01) !important;
+        box-shadow: 0 12px 48px rgba(99, 102, 241, 0.3) !important;
     }
 
-    /* Sidebar styling */
+    /* User message - Purple gradient */
+    .stChatMessage[data-testid*="user"] {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%) !important;
+        border-left: 3px solid #6366F1 !important;
+    }
+
+    /* Assistant message - Blue gradient */
+    .stChatMessage[data-testid*="assistant"] {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(147, 51, 234, 0.15) 100%) !important;
+        border-left: 3px solid #3B82F6 !important;
+    }
+
+    /* Sidebar styling - Premium dark */
     section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1d29 0%, #0E1117 100%);
-        border-right: 1px solid rgba(79, 70, 229, 0.3);
+        background: linear-gradient(180deg, #0f1729 0%, #0a0e27 100%) !important;
+        border-right: 1px solid rgba(99, 102, 241, 0.2) !important;
+        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3) !important;
     }
 
-    /* Buttons */
+    section[data-testid="stSidebar"] > div {
+        background: transparent !important;
+    }
+
+    /* Buttons - Gradient with glow */
     .stButton button {
-        border-radius: 8px;
-        border: 1px solid rgba(79, 70, 229, 0.5);
-        background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-        color: white;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+        border-radius: 12px !important;
+        border: none !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        padding: 0.75rem 1.5rem !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
+        position: relative !important;
+        overflow: hidden !important;
+    }
+
+    .stButton button::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .stButton button:hover::before {
+        left: 100%;
     }
 
     .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(79, 70, 229, 0.5);
-        border-color: rgba(79, 70, 229, 0.8);
+        transform: translateY(-3px) !important;
+        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6) !important;
     }
 
-    /* Input fields */
-    .stTextInput input, .stTextArea textarea {
-        border-radius: 8px;
-        border: 1px solid rgba(79, 70, 229, 0.3);
-        background-color: rgba(255, 255, 255, 0.05);
-        transition: all 0.3s ease;
+    .stButton button:active {
+        transform: translateY(-1px) !important;
     }
 
-    .stTextInput input:focus, .stTextArea textarea:focus {
-        border-color: rgba(79, 70, 229, 0.8);
-        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+    /* Primary button variant */
+    .stButton button[kind="primary"] {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+        box-shadow: 0 4px 16px rgba(245, 87, 108, 0.4) !important;
     }
 
-    /* Success/Error/Warning boxes */
+    .stButton button[kind="primary"]:hover {
+        box-shadow: 0 8px 24px rgba(245, 87, 108, 0.6) !important;
+    }
+
+    /* Input fields - Futuristic */
+    .stTextInput input, .stTextArea textarea, .stNumberInput input {
+        border-radius: 12px !important;
+        border: 2px solid rgba(99, 102, 241, 0.3) !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        backdrop-filter: blur(10px) !important;
+        color: #e5e7eb !important;
+        padding: 0.75rem 1rem !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus {
+        border-color: #6366F1 !important;
+        box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2), 0 0 20px rgba(99, 102, 241, 0.3) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    /* Alert boxes - Enhanced */
     .stSuccess {
-        background-color: rgba(34, 197, 94, 0.1);
-        border-left: 4px solid #22C55E;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%) !important;
+        border-left: 4px solid #22C55E !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2) !important;
     }
 
     .stError {
-        background-color: rgba(239, 68, 68, 0.1);
-        border-left: 4px solid #EF4444;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%) !important;
+        border-left: 4px solid #EF4444 !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2) !important;
     }
 
     .stWarning {
-        background-color: rgba(251, 191, 36, 0.1);
-        border-left: 4px solid #FBBF24;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%) !important;
+        border-left: 4px solid #FBBF24 !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2) !important;
     }
 
     .stInfo {
-        background-color: rgba(59, 130, 246, 0.1);
-        border-left: 4px solid #3B82F6;
-        border-radius: 8px;
-        padding: 1rem;
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%) !important;
+        border-left: 4px solid #3B82F6 !important;
+        border-radius: 12px !important;
+        padding: 1.25rem !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2) !important;
     }
 
-    /* Title animations */
+    /* Headings - Animated gradient text */
     h1 {
-        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        font-weight: 800;
-        animation: gradient 3s ease infinite;
-        background-size: 200% 200%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+        font-weight: 800 !important;
+        letter-spacing: -0.02em !important;
+        animation: gradient-shift 4s ease infinite !important;
+        background-size: 200% 200% !important;
     }
 
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
+    h2 {
+        color: #e5e7eb !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
+    }
+
+    h3 {
+        color: #d1d5db !important;
+        font-weight: 600 !important;
+    }
+
+    @keyframes gradient-shift {
+        0%, 100% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
     }
 
-    /* Status indicators */
+    /* Status indicators - Glowing */
     .status-indicator {
         display: inline-block;
-        width: 10px;
-        height: 10px;
+        width: 12px;
+        height: 12px;
         border-radius: 50%;
-        margin-right: 8px;
-        animation: pulse 2s ease-in-out infinite;
+        margin-right: 10px;
+        animation: pulse-glow 2s ease-in-out infinite;
+        box-shadow: 0 0 10px currentColor;
     }
 
-    .status-healthy { background-color: #22C55E; }
-    .status-warning { background-color: #FBBF24; }
-    .status-error { background-color: #EF4444; }
-
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
+    .status-healthy {
+        background-color: #22C55E;
+        box-shadow: 0 0 16px #22C55E, 0 0 32px rgba(34, 197, 94, 0.5);
     }
 
-    /* Code blocks */
+    .status-warning {
+        background-color: #FBBF24;
+        box-shadow: 0 0 16px #FBBF24, 0 0 32px rgba(251, 191, 36, 0.5);
+    }
+
+    .status-error {
+        background-color: #EF4444;
+        box-shadow: 0 0 16px #EF4444, 0 0 32px rgba(239, 68, 68, 0.5);
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.6;
+            transform: scale(1.1);
+        }
+    }
+
+    /* Code blocks - Terminal style */
     .stCodeBlock {
-        border-radius: 8px;
-        border: 1px solid rgba(79, 70, 229, 0.3);
-        background-color: rgba(0, 0, 0, 0.3);
+        border-radius: 12px !important;
+        border: 1px solid rgba(99, 102, 241, 0.3) !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
     }
 
-    /* Metrics */
+    code {
+        background: rgba(99, 102, 241, 0.1) !important;
+        border-radius: 4px !important;
+        padding: 2px 6px !important;
+        font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace !important;
+    }
+
+    /* Metrics - Card style */
     div[data-testid="stMetric"] {
-        background-color: rgba(255, 255, 255, 0.05);
-        padding: 1rem;
-        border-radius: 8px;
-        border: 1px solid rgba(79, 70, 229, 0.2);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%) !important;
+        padding: 1.25rem !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(99, 102, 241, 0.2) !important;
+        backdrop-filter: blur(10px) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+        transition: all 0.3s ease !important;
     }
 
-    /* Spinner */
+    div[data-testid="stMetric"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3) !important;
+    }
+
+    div[data-testid="stMetric"] label {
+        color: #9ca3af !important;
+        font-size: 0.875rem !important;
+        font-weight: 600 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.05em !important;
+    }
+
+    div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #e5e7eb !important;
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+    }
+
+    /* Spinner - Cyberpunk */
     .stSpinner > div {
-        border-top-color: #4F46E5 !important;
+        border-top-color: #6366F1 !important;
+        border-right-color: #8B5CF6 !important;
+        animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
     }
 
-    /* Chat input */
+    /* Chat input - Floating */
     .stChatInput {
-        border-radius: 12px;
-        border: 2px solid rgba(79, 70, 229, 0.3);
-        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px !important;
+        border: 2px solid rgba(99, 102, 241, 0.3) !important;
+        background: rgba(255, 255, 255, 0.05) !important;
+        backdrop-filter: blur(20px) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+        transition: all 0.3s ease !important;
     }
 
-    /* Scrollbar */
+    .stChatInput:focus-within {
+        border-color: #6366F1 !important;
+        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4), 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
+        transform: translateY(-2px);
+    }
+
+    /* Scrollbar - Sleek */
     ::-webkit-scrollbar {
-        width: 10px;
-        height: 10px;
+        width: 8px;
+        height: 8px;
     }
 
     ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.05);
-        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 10px;
     }
 
     ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
-        border-radius: 5px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+        transition: all 0.3s ease;
     }
 
     ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+        background: linear-gradient(135deg, #7c8aed 0%, #8b5fb5 100%);
+        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
     }
 
-    /* Tabs */
+    /* Tabs - Modern */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
+        gap: 12px;
+        background: transparent !important;
     }
 
     .stTabs [data-baseweb="tab"] {
-        border-radius: 8px;
-        padding: 8px 16px;
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(79, 70, 229, 0.3);
+        border-radius: 12px !important;
+        padding: 10px 20px !important;
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(99, 102, 241, 0.2) !important;
+        color: #9ca3af !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(99, 102, 241, 0.4) !important;
+        color: #e5e7eb !important;
     }
 
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #4F46E5 0%, #6366F1 100%);
-        border-color: rgba(79, 70, 229, 0.8);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border-color: transparent !important;
+        color: white !important;
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
+    }
+
+    /* Expander - Accordion style */
+    .streamlit-expanderHeader {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(99, 102, 241, 0.2) !important;
+        padding: 1rem !important;
+        transition: all 0.3s ease !important;
+    }
+
+    .streamlit-expanderHeader:hover {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border-color: rgba(99, 102, 241, 0.4) !important;
+    }
+
+    /* Download button */
+    .stDownloadButton button {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
+    }
+
+    .stDownloadButton button:hover {
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.6) !important;
+    }
+
+    /* Select box */
+    .stSelectbox [data-baseweb="select"] {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border-radius: 12px !important;
+        border: 2px solid rgba(99, 102, 241, 0.3) !important;
+    }
+
+    /* Divider */
+    hr {
+        border-color: rgba(99, 102, 241, 0.2) !important;
+        margin: 2rem 0 !important;
+    }
+
+    /* Link styling */
+    a {
+        color: #818cf8 !important;
+        text-decoration: none !important;
+        transition: all 0.3s ease !important;
+    }
+
+    a:hover {
+        color: #a5b4fc !important;
+        text-shadow: 0 0 10px rgba(129, 140, 248, 0.5) !important;
     }
 </style>
 """
@@ -559,6 +784,21 @@ with st.sidebar:
 
     # Documentation Links with enhanced styling
     st.subheader("📚 Resources")
+
+    # Add helpful keyboard shortcuts
+    with st.expander("⌨️ Keyboard Shortcuts"):
+        st.markdown(
+            """
+            <div style='font-size: 0.9rem; color: #9CA3AF;'>
+                <p><kbd>Ctrl</kbd> + <kbd>Enter</kbd> - Send message</p>
+                <p><kbd>Ctrl</kbd> + <kbd>K</kbd> - Clear chat</p>
+                <p><kbd>Ctrl</kbd> + <kbd>R</kbd> - Refresh page</p>
+                <p><kbd>/</kbd> - Focus input field</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
     st.markdown(
         """
         <div style='padding: 0.5rem;'>
@@ -573,6 +813,12 @@ with st.sidebar:
                       background: rgba(79, 70, 229, 0.1); border-radius: 6px;
                       text-decoration: none; color: #A5B4FC; border: 1px solid rgba(79, 70, 229, 0.3);'>
                 🏥 Health Endpoint
+            </a>
+            <a href='http://127.0.0.1:8000/metrics' target='_blank'
+               style='display: block; padding: 0.5rem; margin: 0.25rem 0;
+                      background: rgba(79, 70, 229, 0.1); border-radius: 6px;
+                      text-decoration: none; color: #A5B4FC; border: 1px solid rgba(79, 70, 229, 0.3);'>
+                📊 System Metrics
             </a>
             <a href='https://developers.notion.com/reference' target='_blank'
                style='display: block; padding: 0.5rem; margin: 0.25rem 0;
@@ -597,9 +843,28 @@ with st.sidebar:
 st.title("💬 MCP AI Assistant")
 st.markdown(
     """
-    <p style='font-size: 1.1rem; color: #9CA3AF; margin-top: -1rem;'>
-        Your intelligent companion for Docker MCP management and Notion integration
-    </p>
+    <div style='margin-top: -1rem; margin-bottom: 1.5rem;'>
+        <p style='font-size: 1.1rem; color: #9CA3AF; margin-bottom: 0.5rem;'>
+            Your intelligent companion for Docker MCP management and Notion integration
+        </p>
+        <div style='display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;'>
+            <span style='background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white; padding: 0.25rem 0.75rem; border-radius: 12px;
+                        font-size: 0.85rem; font-weight: 600;'>
+                v2.0.0 Enhanced
+            </span>
+            <span style='background: rgba(34, 197, 94, 0.2); color: #22C55E;
+                        padding: 0.25rem 0.75rem; border-radius: 12px;
+                        font-size: 0.85rem; font-weight: 600;'>
+                ✨ New Theme
+            </span>
+            <span style='background: rgba(59, 130, 246, 0.2); color: #3B82F6;
+                        padding: 0.25rem 0.75rem; border-radius: 12px;
+                        font-size: 0.85rem; font-weight: 600;'>
+                🚀 Production Ready
+            </span>
+        </div>
+    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -651,6 +916,66 @@ for idx, message in enumerate(st.session_state.messages):
             st.caption(
                 f"🕐 {datetime.fromisoformat(message['timestamp']).strftime('%I:%M %p')}"
             )
+
+# Show helpful example prompts if conversation is empty (only welcome message)
+if len(st.session_state.messages) == 1:
+    st.markdown("### 💡 Try These Example Prompts:")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown(
+            """
+            <div style='background: rgba(99, 102, 241, 0.1); padding: 1rem;
+                        border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.3);
+                        margin-bottom: 1rem;'>
+                <h4 style='margin: 0 0 0.5rem 0; color: #A5B4FC;'>🐳 Docker</h4>
+                <ul style='margin: 0; padding-left: 1.5rem; color: #9CA3AF;'>
+                    <li>List all running containers</li>
+                    <li>Show me MCP server status</li>
+                    <li>Get logs from the last hour</li>
+                </ul>
+            </div>
+
+            <div style='background: rgba(167, 139, 250, 0.1); padding: 1rem;
+                        border-radius: 12px; border: 1px solid rgba(167, 139, 250, 0.3);'>
+                <h4 style='margin: 0 0 0.5rem 0; color: #C4B5FD;'>📝 Notion</h4>
+                <ul style='margin: 0; padding-left: 1.5rem; color: #9CA3AF;'>
+                    <li>Search my workspace</li>
+                    <li>List all databases</li>
+                    <li>Create a new task page</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with col2:
+        st.markdown(
+            """
+            <div style='background: rgba(59, 130, 246, 0.1); padding: 1rem;
+                        border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3);
+                        margin-bottom: 1rem;'>
+                <h4 style='margin: 0 0 0.5rem 0; color: #93C5FD;'>🔧 System</h4>
+                <ul style='margin: 0; padding-left: 1.5rem; color: #9CA3AF;'>
+                    <li>Check system health</li>
+                    <li>Show available tools</li>
+                    <li>What can you do?</li>
+                </ul>
+            </div>
+
+            <div style='background: rgba(16, 185, 129, 0.1); padding: 1rem;
+                        border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);'>
+                <h4 style='margin: 0 0 0.5rem 0; color: #6EE7B7;'>💬 Natural Language</h4>
+                <ul style='margin: 0; padding-left: 1.5rem; color: #9CA3AF;'>
+                    <li>Find my latest notes</li>
+                    <li>Help me debug a container</li>
+                    <li>Explain how MCP works</li>
+                </ul>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 # Handle suggested prompts from sidebar
 if "suggested_prompt" in st.session_state:
