@@ -5,9 +5,7 @@ Handles all interactions with the Docker MCP Gateway.
 Provides methods for server discovery, health checks, and command execution.
 """
 
-import docker
 import subprocess
-from docker.errors import NotFound, APIError, DockerException
 from typing import Optional, Dict, Any
 from app.config import MCP_CONTAINER_NAME
 
@@ -22,30 +20,9 @@ class DockerService:
 
     def __init__(self):
         """
-        Initializes the Docker client for general Docker operations.
+        Initializes the Docker service without touching the Docker SDK.
         """
-        self.client: Optional[docker.DockerClient] = None
         self.connection_error: Optional[str] = None
-
-        try:
-            # Connect to Docker daemon using environment settings
-            self.client = docker.from_env()
-
-            # Verify connection by pinging the daemon
-            self.client.ping()
-            print("✓ Successfully connected to Docker daemon")
-
-            # Check if MCP gateway is accessible
-            self._check_mcp_gateway()
-
-        except DockerException as e:
-            error_msg = (
-                "Failed to connect to Docker daemon. " "Is Docker Desktop running?"
-            )
-            print(f"✗ {error_msg}")
-            print(f"  Error: {str(e)}")
-            self.connection_error = error_msg
-            self.client = None
 
     def _check_mcp_gateway(self):
         """
@@ -75,7 +52,11 @@ class DockerService:
         Returns:
             True if Docker client is connected.
         """
-        return self.client is not None
+        try:
+            result = subprocess.run(["docker", "ps"], capture_output=True, timeout=2)
+            return result.returncode == 0
+        except Exception:
+            return False
 
     def get_container_info(self) -> Dict[str, Any]:
         """
@@ -85,7 +66,7 @@ class DockerService:
             Dictionary containing status information.
         """
         return {
-            "connected": self.client is not None,
+            "connected": self.is_healthy(),
             "gateway": "MCP Docker Gateway (CLI process)",
             "status": "running" if self.is_healthy() else "disconnected",
         }
@@ -132,7 +113,7 @@ class DockerService:
                 return f"Error: {error}"
 
         except subprocess.TimeoutExpired:
-            error_msg = f"Command timed out after 30 seconds"
+            error_msg = "Command timed out after 30 seconds"
             print(f"✗ {error_msg}")
             return f"Error: {error_msg}"
 
@@ -150,25 +131,38 @@ class DockerService:
         Returns:
             Formatted string listing all containers.
         """
-        if not self.client:
-            return "Error: Not connected to Docker daemon"
-
         try:
-            containers = self.client.containers.list(all=True)
+            result = subprocess.run(
+                [
+                    "docker",
+                    "ps",
+                    "-a",
+                    "--format",
+                    "{{.Names}}\t{{.Status}}\t{{.Image}}",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
 
-            if not containers:
+            if result.returncode != 0:
+                return "Error: Could not list containers"
+
+            output = result.stdout.strip()
+            if not output:
                 return "No containers found on this system"
 
-            result = "Containers on this system:\n\n"
-            for container in containers:
-                result += (
-                    f"• {container.name}\n"
-                    f"  Status: {container.status}\n"
-                    f"  Image: {container.image.tags[0] if container.image.tags else 'N/A'}\n"
-                    f"  ID: {container.short_id}\n\n"
-                )
+            formatted = "Containers on this system:\n\n"
+            for line in output.splitlines():
+                parts = line.split("\t")
+                if len(parts) >= 3:
+                    formatted += (
+                        f"• {parts[0]}\n"
+                        f"  Status: {parts[1]}\n"
+                        f"  Image: {parts[2]}\n\n"
+                    )
 
-            return result
+            return formatted.rstrip()
 
         except Exception as e:
             return f"Error listing containers: {str(e)}"
@@ -183,17 +177,25 @@ class DockerService:
         Returns:
             The container's log output
         """
-        if not self.is_container_running():
-            return "Error: Container is not running"
-
         try:
-            logs = self.mcp_container.logs(tail=tail, timestamps=True)
-            decoded_logs = logs.decode("utf-8")
+            result = subprocess.run(
+                ["docker", "logs", "--tail", str(tail), MCP_CONTAINER_NAME],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
 
-            if not decoded_logs:
+            if result.returncode != 0:
+                return (
+                    f"Error: Container '{MCP_CONTAINER_NAME}' not found or not running"
+                )
+
+            logs = result.stdout.strip()
+
+            if not logs:
                 return "No logs available"
 
-            return f"Last {tail} lines of container logs:\n\n{decoded_logs}"
+            return f"Last {tail} lines of container logs:\n\n{logs}"
 
         except Exception as e:
             return f"Error retrieving logs: {str(e)}"

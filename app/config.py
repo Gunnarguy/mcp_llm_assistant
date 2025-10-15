@@ -8,26 +8,30 @@ that all required configuration is present.
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from app.logger import setup_logger
 
 # Find the project root (parent of app directory)
 PROJECT_ROOT = Path(__file__).parent.parent
+
+# Setup logger for config module
+logger = setup_logger(__name__, log_file="logs/config.log")
 
 # Load environment variables from .env file in project root
 env_path = PROJECT_ROOT / ".env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
-    print(f"✓ Loaded environment variables from: {env_path}")
+    logger.info(f"Loaded environment variables from: {env_path}")
 else:
-    print(f"⚠ Warning: .env file not found at {env_path}")
-    print(f"  Please copy .env.template to .env and add your API keys")
+    logger.warning(f".env file not found at {env_path}")
+    logger.warning("Please copy .env.template to .env and add your API keys")
 
 
 # --- Google Gemini API Configuration ---
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if not GOOGLE_API_KEY or GOOGLE_API_KEY == "your_gemini_api_key_here":
-    print("⚠ WARNING: GOOGLE_API_KEY not configured properly!")
-    print("  Get your free API key from: https://aistudio.google.com/app/apikey")
-    print("  Then add it to your .env file")
+    logger.warning("GOOGLE_API_KEY not configured properly!")
+    logger.warning("Get your free API key from: https://aistudio.google.com/app/apikey")
+    logger.warning("Then add it to your .env file")
     GOOGLE_API_KEY = None  # Allow app to start but LLM won't work
 
 
@@ -85,14 +89,14 @@ def verify_config():
     }
 
 
-# Print configuration status on import
+# Log configuration status on import
 if __name__ != "__main__":
     config_status = verify_config()
     if config_status["valid"]:
-        print(f"✓ Configuration loaded successfully")
-        print(f"  - Model: {GEMINI_MODEL}")
-        print(f"  - Target Container: {MCP_CONTAINER_NAME}")
+        logger.info("Configuration loaded successfully")
+        logger.info(f"Model: {GEMINI_MODEL}")
+        logger.info(f"Target Container: {MCP_CONTAINER_NAME}")
     else:
-        print("⚠ Configuration issues detected:")
+        logger.warning("Configuration issues detected:")
         for issue in config_status["issues"]:
-            print(f"  - {issue}")
+            logger.warning(f"  {issue}")

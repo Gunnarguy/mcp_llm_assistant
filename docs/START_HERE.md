@@ -58,12 +58,12 @@ nano .env
 
 Change this line:
 ```env
-GOOGLE_API_KEY="your_gemini_api_key_here"
+GOOGLE_API_KEY="your_gemini_api_key_here"  # pragma: allowlist secret
 ```
 
 To your actual key:
 ```env
-GOOGLE_API_KEY="AIzaSy...your_actual_key_here"
+GOOGLE_API_KEY="AIzaSy...your_actual_key_here"  # pragma: allowlist secret
 ```
 
 **Important:** Also verify your container name!

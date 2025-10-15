@@ -98,14 +98,14 @@ pre-commit run --all-files
 git status
 
 # Search for sensitive patterns
-git diff --cached | grep -iE "AIzaSy|api_key.*=.*[A-Za-z0-9]{20,}|secret.*=.*[A-Za-z0-9]{20,}"
+git diff --cached | grep -iE "AIzaSy|api_key.*=.*[A-Za-z0-9]{20,}|secret.*=.*[A-Za-z0-9]{20,}"  # pragma: allowlist secret
 
 # Expected output: Empty (or only documentation placeholders)
 ```
 
 **Red flags** (DO NOT COMMIT if you see):
 - Real API keys starting with `AIzaSy...`
-- Lines like `GOOGLE_API_KEY="AIzaSy...actual key..."`
+- Lines like `GOOGLE_API_KEY="AIzaSy...actual key..."`  # pragma: allowlist secret
 - Any credentials in code comments
 
 ---

@@ -9,6 +9,20 @@ import streamlit as st
 import requests
 from typing import List, Dict, Any
 import time
+import logging
+from pathlib import Path
+
+# Setup logging for frontend
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler(Path(__file__).parent.parent / "logs" / "frontend.log"),
+    ],
+)
+logger = logging.getLogger(__name__)
 
 
 # --- Page Configuration ---
@@ -36,16 +50,33 @@ def check_backend_health() -> Dict[str, Any]:
         Health status dictionary or error info
     """
     try:
+        logger.info("Checking backend health...")
         response = requests.get(HEALTH_URL, timeout=5)
         response.raise_for_status()
-        return response.json()
-    except requests.exceptions.ConnectionError:
+        health_data = response.json()
+        logger.info(f"Backend health: {health_data.get('status', 'unknown')}")
+        return health_data
+    except requests.exceptions.ConnectionError as e:
+        logger.error(f"Backend connection error: {e}")
         return {
             "status": "unreachable",
             "error": "Cannot connect to backend. Is the FastAPI server running?",
         }
+    except requests.exceptions.Timeout as e:
+        logger.error(f"Backend health check timeout: {e}")
+        return {
+            "status": "unreachable",
+            "error": "Backend health check timed out. Server may be overloaded.",
+        }
+    except requests.exceptions.HTTPError as e:
+        logger.error(f"Backend HTTP error: {e}")
+        return {
+            "status": "error",
+            "error": f"Backend returned error: {e.response.status_code}",
+        }
     except Exception as e:
-        return {"status": "error", "error": str(e)}
+        logger.error(f"Unexpected error checking backend health: {e}")
+        return {"status": "error", "error": f"Unexpected error: {str(e)}"}
 
 
 def send_chat_message(prompt: str, history: List[Dict[str, str]]) -> str:
@@ -60,6 +91,7 @@ def send_chat_message(prompt: str, history: List[Dict[str, str]]) -> str:
         The assistant's response or error message
     """
     try:
+        logger.info(f"Sending chat message: {prompt[:50]}...")
         payload = {"prompt": prompt, "history": history}
 
         response = requests.post(
@@ -69,23 +101,52 @@ def send_chat_message(prompt: str, history: List[Dict[str, str]]) -> str:
         )
         response.raise_for_status()
 
-        return response.json()["reply"]
+        reply = response.json()["reply"]
+        logger.info(f"Received response: {reply[:50]}...")
+        return reply
 
-    except requests.exceptions.Timeout:
-        return "⏱️ Request timed out. The operation took too long to complete."
+    except requests.exceptions.Timeout as e:
+        error_msg = "⏱️ Request timed out. The operation took too long to complete."
+        logger.error(f"Chat timeout: {e}")
+        return error_msg
 
-    except requests.exceptions.ConnectionError:
-        return "❌ Cannot connect to the backend. Please ensure the FastAPI server is running."
+    except requests.exceptions.ConnectionError as e:
+        error_msg = "❌ Cannot connect to the backend. Please ensure the FastAPI server is running."
+        logger.error(f"Chat connection error: {e}")
+        return error_msg
 
     except requests.exceptions.HTTPError as e:
+        logger.error(f"Chat HTTP error: {e.response.status_code} - {e}")
         if e.response.status_code == 503:
-            return "⚠️ Backend service unavailable. Check if Docker is running and the MCP container is started."
+            return (
+                "⚠️ Backend service unavailable. Check if Docker is "
+                "running and the MCP container is started."
+            )
+        elif e.response.status_code == 422:
+            return "❌ Invalid request format. Please check your input."
+        elif e.response.status_code == 429:
+            return "⚠️ Rate limit exceeded. Please wait a moment and " "try again."
         else:
-            error_detail = e.response.json().get("detail", str(e))
-            return f"❌ Server error: {error_detail}"
+            try:
+                error_detail = e.response.json().get("detail", str(e))
+            except Exception:
+                error_detail = str(e)
+            return f"❌ Server error ({e.response.status_code}): " f"{error_detail}"
+
+    except requests.exceptions.JSONDecodeError as e:
+        error_msg = "❌ Invalid response from server. Please try again."
+        logger.error(f"JSON decode error: {e}")
+        return error_msg
+
+    except KeyError as e:
+        error_msg = "❌ Unexpected response format from server."
+        logger.error(f"Missing key in response: {e}")
+        return error_msg
 
     except Exception as e:
-        return f"❌ Unexpected error: {str(e)}"
+        error_msg = f"❌ Unexpected error: {str(e)}"
+        logger.error(f"Unexpected chat error: {e}", exc_info=True)
+        return error_msg
 
 
 # --- Sidebar ---

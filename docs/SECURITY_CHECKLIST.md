@@ -130,7 +130,7 @@ Add this section to `README.md` after installation steps:
 2. Edit `.env` and add your API keys:
    ```bash
    # Get your key at: https://aistudio.google.com/app/apikey
-   GOOGLE_API_KEY="your_actual_key_here"
+   GOOGLE_API_KEY="your_actual_key_here"  # pragma: allowlist secret
    ```
 
 3. **NEVER commit `.env` to version control**:

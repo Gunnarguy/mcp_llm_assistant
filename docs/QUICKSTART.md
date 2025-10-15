@@ -38,7 +38,7 @@ nano .env
 
 Paste your API key:
 ```env
-GOOGLE_API_KEY="AIza...your_actual_key_here"
+GOOGLE_API_KEY="AIza...your_actual_key_here"  # pragma: allowlist secret
 MCP_CONTAINER_NAME="mcp-toolkit"
 ```
 
