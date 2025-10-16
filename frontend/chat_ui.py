@@ -56,521 +56,355 @@ HEALTH_URL = "http://127.0.0.1:8000/health"
 # --- Custom CSS for Beautiful UI ---
 CUSTOM_CSS = """
 <style>
-    /* Import modern font */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+        color-scheme: only light;
+    }
 
     * {
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        color: #f0f0f0;
+        color: #1f2933;
     }
 
-    /* Main app styling - Dark cyberpunk gradient */
-    .stApp {
-        background: linear-gradient(135deg, #0a0e27 0%, #16213e 50%, #0f3460 100%);
-        background-attachment: fixed;
-        color: #f0f0f0;
+    body,
+    .stApp,
+    .block-container {
+        background: #ffffff !important;
+        color: #1f2933 !important;
     }
 
-    /* Animated background particles */
-    .stApp::before {
-        content: '';
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-image:
-            radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 80% 80%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
-            radial-gradient(circle at 40% 20%, rgba(167, 139, 250, 0.1) 0%, transparent 50%);
-        pointer-events: none;
-        animation: particles 20s ease-in-out infinite;
+    .block-container {
+        padding: 2rem 2.5rem !important;
     }
 
-    @keyframes particles {
-        0%, 100% { opacity: 0.3; transform: scale(1); }
-        50% { opacity: 0.6; transform: scale(1.1); }
-    }
-
-    /* Chat messages - Glassmorphism */
-    .stChatMessage {
-        background: rgba(255, 255, 255, 0.08) !important;
-        backdrop-filter: blur(20px);
-        border-radius: 16px !important;
-        padding: 1.5rem !important;
-        margin: 1rem 0 !important;
-        border: 1px solid rgba(255, 255, 255, 0.15) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        color: #f0f0f0 !important;
-    }
-
-    .stChatMessage:hover {
-        background: rgba(255, 255, 255, 0.12) !important;
-        border-color: rgba(99, 102, 241, 0.5) !important;
-        transform: translateY(-4px) scale(1.01) !important;
-        box-shadow: 0 12px 48px rgba(99, 102, 241, 0.4) !important;
-    }
-
-    /* User message - Purple gradient */
-    .stChatMessage[data-testid*="user"] {
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(139, 92, 246, 0.25) 100%) !important;
-        border-left: 4px solid #8B5CF6 !important;
-    }
-
-    /* Assistant message - Blue gradient */
-    .stChatMessage[data-testid*="assistant"] {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(147, 51, 234, 0.25) 100%) !important;
-        border-left: 4px solid #60A5FA !important;
-    }
-
-    /* Message content text */
-    .stChatMessage p, .stChatMessage div, .stChatMessage span {
-        color: #f0f0f0 !important;
-    }
-
-    .stChatMessage code {
-        color: #fbbf24 !important;
-        background: rgba(0, 0, 0, 0.4) !important;
-    }
-
-    /* Sidebar styling - Premium dark */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0f1729 0%, #0a0e27 100%) !important;
-        border-right: 1px solid rgba(99, 102, 241, 0.3) !important;
-        box-shadow: 4px 0 24px rgba(0, 0, 0, 0.4) !important;
-    }
-
-    section[data-testid="stSidebar"] > div {
+    .stApp > header,
+    .stApp [data-testid="stHeader"],
+    .stApp [data-testid="stToolbar"],
+    .stApp [data-testid="stDecoration"],
+    .stApp [data-testid="stStatusWidget"],
+    [data-testid="stBottom"],
+    [data-testid="stChatInputContainer"],
+    footer {
         background: transparent !important;
     }
 
-    /* Sidebar text */
-    section[data-testid="stSidebar"] p,
-    section[data-testid="stSidebar"] div,
-    section[data-testid="stSidebar"] span,
-    section[data-testid="stSidebar"] label {
-        color: #e5e7eb !important;
+    section[data-testid="stSidebar"] {
+        background: #ffffff !important;
+        border-right: 1px solid #e5e7eb !important;
+        box-shadow: 4px 0 24px rgba(15, 23, 42, 0.05) !important;
     }
 
     section[data-testid="stSidebar"] h1,
     section[data-testid="stSidebar"] h2,
     section[data-testid="stSidebar"] h3,
     section[data-testid="stSidebar"] h4 {
-        color: #f0f0f0 !important;
+        color: #111827 !important;
+        font-weight: 700 !important;
     }
 
-    /* Buttons - Gradient with glow */
+    section[data-testid="stSidebar"] p,
+    section[data-testid="stSidebar"] div,
+    section[data-testid="stSidebar"] span,
+    section[data-testid="stSidebar"] label {
+        color: #4b5563 !important;
+    }
+
+    .stMarkdown,
+    .stMarkdown p,
+    .stMarkdown li {
+        color: #1f2933 !important;
+        line-height: 1.65 !important;
+    }
+
+    .stMarkdown strong {
+        color: #111827 !important;
+    }
+
     .stButton button {
         border-radius: 12px !important;
-        border: none !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        color: white !important;
+        border: 1px solid #2563eb !important;
+        background: #2563eb !important;
+        color: #ffffff !important;
         font-weight: 600 !important;
-        padding: 0.75rem 1.5rem !important;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
-        position: relative !important;
-        overflow: hidden !important;
-    }
-
-    .stButton button::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-        transition: left 0.5s;
-    }
-
-    .stButton button:hover::before {
-        left: 100%;
+        padding: 0.65rem 1.2rem !important;
+        transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     }
 
     .stButton button:hover {
-        transform: translateY(-3px) !important;
-        box-shadow: 0 8px 24px rgba(102, 126, 234, 0.6) !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.18) !important;
+        background: #1d4ed8 !important;
+        border-color: #1d4ed8 !important;
     }
 
     .stButton button:active {
-        transform: translateY(-1px) !important;
+        transform: translateY(0);
+        box-shadow: none !important;
     }
 
-    /* Primary button variant */
+    .stButton button[kind="secondary"] {
+        background: #ffffff !important;
+        color: #2563eb !important;
+    }
+
     .stButton button[kind="primary"] {
-        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
-        box-shadow: 0 4px 16px rgba(245, 87, 108, 0.4) !important;
+        background: #ea580c !important;
+        border-color: #ea580c !important;
+        box-shadow: 0 8px 20px rgba(234, 88, 12, 0.18) !important;
     }
 
     .stButton button[kind="primary"]:hover {
-        box-shadow: 0 8px 24px rgba(245, 87, 108, 0.6) !important;
+        background: #c2410c !important;
+        border-color: #c2410c !important;
     }
 
-    /* Input fields - Futuristic */
-    .stTextInput input, .stTextArea textarea, .stNumberInput input {
-        border-radius: 12px !important;
-        border: 2px solid rgba(99, 102, 241, 0.4) !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        backdrop-filter: blur(10px) !important;
-        color: #f0f0f0 !important;
-        padding: 0.75rem 1rem !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stTextInput input:focus, .stTextArea textarea:focus, .stNumberInput input:focus {
-        border-color: #8B5CF6 !important;
-        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.25), 0 0 20px rgba(139, 92, 246, 0.4) !important;
-        background: rgba(255, 255, 255, 0.12) !important;
-    }
-
-    .stTextInput input::placeholder, .stTextArea textarea::placeholder {
-        color: #9ca3af !important;
-    }
-
-    /* Alert boxes - Enhanced */
-    .stSuccess {
-        background: linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%) !important;
-        border-left: 4px solid #22C55E !important;
-        border-radius: 12px !important;
+    .stChatMessage {
+        background: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
+        border-radius: 14px !important;
         padding: 1.25rem !important;
-        backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(34, 197, 94, 0.2) !important;
+        margin: 1rem 0 !important;
+        box-shadow: 0 12px 24px rgba(15, 23, 42, 0.06) !important;
+    }
+
+    .stChatMessage[data-testid*="user"] {
+        background: #eff6ff !important;
+        border-left: 4px solid #2563eb !important;
+    }
+
+    .stChatMessage[data-testid*="assistant"] {
+        background: #fff7ed !important;
+        border-left: 4px solid #ea580c !important;
+    }
+
+    .stChatMessage p,
+    .stChatMessage div,
+    .stChatMessage span {
+        color: #1f2933 !important;
+    }
+
+    .stChatMessage code {
+        background: #f1f5f9 !important;
+        color: #2563eb !important;
+        border-radius: 6px !important;
+        padding: 0.2rem 0.4rem !important;
+    }
+
+    .stChatMessage pre {
+        background: #f1f5f9 !important;
+        border-radius: 12px !important;
+        padding: 1rem !important;
+        border: 1px solid #e2e8f0 !important;
+    }
+
+    .stApp input,
+    .stApp textarea,
+    .stApp select,
+    .stApp [role="textbox"] {
+        background: #ffffff !important;
+        border: 1px solid #d1d5db !important;
+        border-radius: 12px !important;
+        color: #1f2933 !important;
+        padding: 0.65rem 1rem !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    .stApp input:focus,
+    .stApp textarea:focus,
+    .stApp select:focus,
+    .stApp [role="textbox"]:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.18) !important;
+        outline: none !important;
+    }
+
+    .stChatInput {
+        border: 1px solid #d1d5db !important;
+        border-radius: 16px !important;
+        background: #ffffff !important;
+        box-shadow: 0 -4px 24px rgba(15, 23, 42, 0.05) !important;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+    }
+
+    .stChatInput:focus-within {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.15) !important;
+    }
+
+    .stChatInput input,
+    .stChatInput textarea,
+    .stChatInput [contenteditable="true"] {
+        background: #ffffff !important;
+        color: #1f2933 !important;
+    }
+
+    .stChatInput input::placeholder,
+    .stChatInput textarea::placeholder {
+        color: #94a3b8 !important;
+    }
+
+    div[data-testid="stChatInputContainer"],
+    .stChatFloatingInputContainer,
+    .stBottom,
+    .stBottom > div {
+        background: #ffffff !important;
+    }
+
+    .stSuccess {
+        background: #ecfdf5 !important;
+        border-left: 4px solid #22c55e !important;
     }
 
     .stError {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%) !important;
-        border-left: 4px solid #EF4444 !important;
-        border-radius: 12px !important;
-        padding: 1.25rem !important;
-        backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(239, 68, 68, 0.2) !important;
+        background: #fef2f2 !important;
+        border-left: 4px solid #ef4444 !important;
     }
 
     .stWarning {
-        background: linear-gradient(135deg, rgba(251, 191, 36, 0.15) 0%, rgba(245, 158, 11, 0.15) 100%) !important;
-        border-left: 4px solid #FBBF24 !important;
-        border-radius: 12px !important;
-        padding: 1.25rem !important;
-        backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(251, 191, 36, 0.2) !important;
+        background: #fffbeb !important;
+        border-left: 4px solid #f59e0b !important;
     }
 
     .stInfo {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(37, 99, 235, 0.15) 100%) !important;
-        border-left: 4px solid #3B82F6 !important;
-        border-radius: 12px !important;
-        padding: 1.25rem !important;
-        backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2) !important;
+        background: #eff6ff !important;
+        border-left: 4px solid #2563eb !important;
     }
 
-    /* Headings - Animated gradient text */
-    h1 {
-        background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f0abfc 100%) !important;
-        -webkit-background-clip: text !important;
-        -webkit-text-fill-color: transparent !important;
-        background-clip: text !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.02em !important;
-        animation: gradient-shift 4s ease infinite !important;
-        background-size: 200% 200% !important;
-    }
-
-    h2 {
-        color: #f0f0f0 !important;
-        font-weight: 700 !important;
-        letter-spacing: -0.01em !important;
-    }
-
-    h3 {
-        color: #e5e7eb !important;
-        font-weight: 600 !important;
-    }
-
-    h4 {
-        color: #d1d5db !important;
-        font-weight: 600 !important;
-    }
-
-    p {
-        color: #e5e7eb !important;
-    }
-
-    /* Labels and captions */
-    label {
-        color: #d1d5db !important;
-    }
-
-    .stCaption {
-        color: #9ca3af !important;
-    }
-
-    @keyframes gradient-shift {
-        0%, 100% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-    }
-
-    /* Status indicators - Glowing */
-    .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 10px;
-        animation: pulse-glow 2s ease-in-out infinite;
-        box-shadow: 0 0 10px currentColor;
-    }
-
-    .status-healthy {
-        background-color: #22C55E;
-        box-shadow: 0 0 16px #22C55E, 0 0 32px rgba(34, 197, 94, 0.5);
-    }
-
-    .status-warning {
-        background-color: #FBBF24;
-        box-shadow: 0 0 16px #FBBF24, 0 0 32px rgba(251, 191, 36, 0.5);
-    }
-
-    .status-error {
-        background-color: #EF4444;
-        box-shadow: 0 0 16px #EF4444, 0 0 32px rgba(239, 68, 68, 0.5);
-    }
-
-    @keyframes pulse-glow {
-        0%, 100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-        50% {
-            opacity: 0.6;
-            transform: scale(1.1);
-        }
-    }
-
-    /* Code blocks - Terminal style */
-    .stCodeBlock {
-        border-radius: 12px !important;
-        border: 1px solid rgba(99, 102, 241, 0.3) !important;
-        background: rgba(0, 0, 0, 0.5) !important;
-        backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-    }
-
-    code {
-        background: rgba(99, 102, 241, 0.1) !important;
-        border-radius: 4px !important;
-        padding: 2px 6px !important;
-        font-family: 'SF Mono', 'Monaco', 'Cascadia Code', monospace !important;
-    }
-
-    /* Metrics - Card style */
     div[data-testid="stMetric"] {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%) !important;
-        padding: 1.25rem !important;
+        background: #ffffff !important;
+        border: 1px solid #e5e7eb !important;
         border-radius: 12px !important;
-        border: 1px solid rgba(99, 102, 241, 0.3) !important;
-        backdrop-filter: blur(10px) !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    div[data-testid="stMetric"]:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05) !important;
+        padding: 1.25rem !important;
     }
 
     div[data-testid="stMetric"] label {
-        color: #d1d5db !important;
-        font-size: 0.875rem !important;
-        font-weight: 600 !important;
+        color: #6b7280 !important;
+        letter-spacing: 0.04em !important;
         text-transform: uppercase !important;
-        letter-spacing: 0.05em !important;
+        font-weight: 600 !important;
     }
 
     div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-        color: #f0f0f0 !important;
-        font-size: 2rem !important;
+        color: #111827 !important;
         font-weight: 700 !important;
     }
 
     div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
-        color: #a5b4fc !important;
+        color: #2563eb !important;
     }
 
-    /* Spinner - Cyberpunk */
     .stSpinner > div {
-        border-top-color: #6366F1 !important;
-        border-right-color: #8B5CF6 !important;
-        animation: spin 1s cubic-bezier(0.4, 0, 0.2, 1) infinite !important;
+        border-top-color: #2563eb !important;
+        border-right-color: #93c5fd !important;
     }
 
-    /* Chat input - Floating */
-    .stChatInput {
-        border-radius: 16px !important;
-        border: 2px solid rgba(139, 92, 246, 0.4) !important;
-        background: rgba(255, 255, 255, 0.08) !important;
-        backdrop-filter: blur(20px) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4) !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .stChatInput:focus-within {
-        border-color: #8B5CF6 !important;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.5), 0 0 0 4px rgba(139, 92, 246, 0.2) !important;
-        transform: translateY(-2px);
-    }
-
-    .stChatInput input {
-        color: #f0f0f0 !important;
-    }
-
-    .stChatInput input::placeholder {
-        color: #9ca3af !important;
-    }
-
-    /* Scrollbar - Sleek */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 10px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-        transition: all 0.3s ease;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #7c8aed 0%, #8b5fb5 100%);
-        box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
-    }
-
-    /* Tabs - Modern */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 12px;
-        background: transparent !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        padding-bottom: 0.5rem !important;
     }
 
     .stTabs [data-baseweb="tab"] {
-        border-radius: 12px !important;
-        padding: 10px 20px !important;
-        background: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(99, 102, 241, 0.2) !important;
-        color: #9ca3af !important;
-        font-weight: 600 !important;
-        transition: all 0.3s ease !important;
+        border-radius: 12px 12px 0 0 !important;
+        border: 1px solid transparent !important;
+        color: #6b7280 !important;
+        padding: 0.6rem 1.3rem !important;
+        background: #ffffff !important;
+        margin-bottom: -1px !important;
     }
 
     .stTabs [data-baseweb="tab"]:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-color: rgba(99, 102, 241, 0.4) !important;
-        color: #e5e7eb !important;
+        color: #1f2933 !important;
+        border-color: #e5e7eb !important;
     }
 
     .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-        border-color: transparent !important;
-        color: white !important;
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4) !important;
+        border-color: #2563eb !important;
+        border-bottom-color: #ffffff !important;
+        color: #2563eb !important;
+        background: #f8fafc !important;
     }
 
-    /* Expander - Accordion style */
     .streamlit-expanderHeader {
-        background: rgba(255, 255, 255, 0.03) !important;
+        background: #f8fafc !important;
+        border: 1px solid #e5e7eb !important;
         border-radius: 12px !important;
-        border: 1px solid rgba(99, 102, 241, 0.2) !important;
         padding: 1rem !important;
-        transition: all 0.3s ease !important;
     }
 
     .streamlit-expanderHeader:hover {
-        background: rgba(255, 255, 255, 0.05) !important;
-        border-color: rgba(99, 102, 241, 0.4) !important;
+        background: #eef2f7 !important;
     }
 
-    /* Download button */
+    .streamlit-expanderContent {
+        background: #ffffff !important;
+        border-radius: 0 0 12px 12px !important;
+        border: 1px solid #e5e7eb !important;
+        border-top: none !important;
+        padding: 1rem !important;
+    }
+
     .stDownloadButton button {
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4) !important;
+        background: #10b981 !important;
+        border: 1px solid #0f9d76 !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
     }
 
     .stDownloadButton button:hover {
-        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.6) !important;
+        background: #0f9d76 !important;
+        border-color: #0f9d76 !important;
+        box-shadow: 0 8px 20px rgba(15, 157, 118, 0.18) !important;
     }
 
-    /* Select box */
     .stSelectbox [data-baseweb="select"] {
-        background: rgba(255, 255, 255, 0.03) !important;
+        background: #ffffff !important;
         border-radius: 12px !important;
-        border: 2px solid rgba(99, 102, 241, 0.3) !important;
+        border: 1px solid #d1d5db !important;
     }
 
-    /* Divider */
-    hr {
-        border-color: rgba(99, 102, 241, 0.2) !important;
-        margin: 2rem 0 !important;
-    }
-
-    /* Link styling */
     a {
-        color: #a5b4fc !important;
+        color: #2563eb !important;
         text-decoration: none !important;
-        transition: all 0.3s ease !important;
         font-weight: 500 !important;
     }
 
     a:hover {
-        color: #c7d2fe !important;
-        text-shadow: 0 0 10px rgba(165, 180, 252, 0.5) !important;
+        color: #1d4ed8 !important;
+        text-decoration: underline !important;
     }
 
-    /* Markdown content in chat */
-    .stMarkdown {
-        color: #e5e7eb !important;
-    }
-
-    .stMarkdown p {
-        color: #e5e7eb !important;
-        line-height: 1.7 !important;
-    }
-
-    .stMarkdown li {
-        color: #e5e7eb !important;
-    }
-
-    .stMarkdown strong {
-        color: #f0f0f0 !important;
-        font-weight: 700 !important;
-    }
-
-    .stMarkdown em {
-        color: #d1d5db !important;
-    }
-
-    /* Blockquotes */
     blockquote {
-        border-left: 4px solid #8B5CF6 !important;
+        border-left: 4px solid #2563eb !important;
         padding-left: 1rem !important;
-        color: #d1d5db !important;
-        background: rgba(139, 92, 246, 0.1) !important;
+        background: #f8fafc !important;
+        color: #1f2933 !important;
         border-radius: 4px !important;
-        margin: 1rem 0 !important;
     }
 
-    /* Lists */
-    ul, ol {
-        color: #e5e7eb !important;
+    hr {
+        border-color: #e5e7eb !important;
+        margin: 2rem 0 !important;
     }
 
-    li::marker {
-        color: #a5b4fc !important;
+    ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5f5;
+        border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: #a5b4fc;
     }
 </style>
 """
@@ -696,8 +530,8 @@ with st.sidebar:
         """
         <div style='text-align: center; padding: 1rem 0;'>
             <h1 style='font-size: 2rem; margin: 0;'>🤖</h1>
-            <h2 style='margin: 0.5rem 0 0 0; font-size: 1.5rem;'>MCP AI Assistant</h2>
-            <p style='color: #9CA3AF; margin: 0.5rem 0 0 0; font-size: 0.9rem;'>Intelligent Docker Management</p>
+            <h2 style='margin: 0.5rem 0 0 0; font-size: 1.5rem; color: #1f2933;'>MCP AI Assistant</h2>
+            <p style='color: #4b5563; margin: 0.5rem 0 0 0; font-size: 0.9rem;'>Intelligent Docker Management</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -713,12 +547,12 @@ with st.sidebar:
     # Create status indicator
     if health.get("status") == "healthy":
         status_html = """
-        <div style='padding: 1rem; border-radius: 8px; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3);'>
+        <div style='padding: 1rem; border-radius: 8px; background: #ecfdf5; border: 1px solid #a7f3d0;'>
             <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-                <span class='status-indicator status-healthy'></span>
-                <strong style='color: #22C55E;'>System Healthy</strong>
+                <span style='display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #22c55e; margin-right: 8px;'></span>
+                <strong style='color: #15803d;'>System Healthy</strong>
             </div>
-            <p style='margin: 0.25rem 0; font-size: 0.9rem; color: #9CA3AF;'>
+            <p style='margin: 0.25rem 0; font-size: 0.9rem; color: #4b5563;'>
                 ✅ All systems operational
             </p>
         </div>
@@ -742,10 +576,10 @@ with st.sidebar:
 
     elif health.get("status") == "partial":
         status_html = """
-        <div style='padding: 1rem; border-radius: 8px; background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3);'>
+        <div style='padding: 1rem; border-radius: 8px; background: #fffbeb; border: 1px solid #fde68a;'>
             <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-                <span class='status-indicator status-warning'></span>
-                <strong style='color: #FBBF24;'>Partial Availability</strong>
+                <span style='display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #f59e0b; margin-right: 8px;'></span>
+                <strong style='color: #b45309;'>Partial Availability</strong>
             </div>
         </div>
         """
@@ -758,10 +592,10 @@ with st.sidebar:
 
     elif health.get("status") == "unreachable":
         status_html = """
-        <div style='padding: 1rem; border-radius: 8px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3);'>
+        <div style='padding: 1rem; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca;'>
             <div style='display: flex; align-items: center; margin-bottom: 0.5rem;'>
-                <span class='status-indicator status-error'></span>
-                <strong style='color: #EF4444;'>Backend Unreachable</strong>
+                <span style='display: inline-block; width: 10px; height: 10px; border-radius: 50%; background-color: #ef4444; margin-right: 8px;'></span>
+                <strong style='color: #b91c1c;'>Backend Unreachable</strong>
             </div>
         </div>
         """
@@ -1083,16 +917,21 @@ if len(st.session_state.messages) == 1:
         )
 
 # Handle suggested prompts from sidebar
+suggested_prompt = None
 if "suggested_prompt" in st.session_state:
-    prompt = st.session_state.suggested_prompt
+    suggested_prompt = st.session_state.suggested_prompt
     del st.session_state.suggested_prompt
-    # Process the suggested prompt
-    st.rerun()
 
 # Chat input with enhanced placeholder
-if prompt := st.chat_input(
+prompt = None
+if suggested_prompt:
+    prompt = suggested_prompt
+elif user_input := st.chat_input(
     "Ask about Docker, Notion, or anything else...", key="chat_input"
 ):
+    prompt = user_input
+
+if prompt:
     # Check backend health before sending
     health = check_backend_health()
     if health.get("status") == "unreachable":
@@ -1182,8 +1021,8 @@ with footer_col1:
     st.markdown(
         """
         <div style='text-align: center;'>
-            <p style='margin: 0; color: #9CA3AF; font-size: 0.9rem;'>Powered by</p>
-            <p style='margin: 0; font-weight: 600;'>Google Gemini 🧠</p>
+            <p style='margin: 0; color: #6b7280; font-size: 0.9rem;'>Powered by</p>
+            <p style='margin: 0; font-weight: 600; color: #1f2933;'>Google Gemini 🧠</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1193,8 +1032,8 @@ with footer_col2:
     st.markdown(
         """
         <div style='text-align: center;'>
-            <p style='margin: 0; color: #9CA3AF; font-size: 0.9rem;'>Built with</p>
-            <p style='margin: 0; font-weight: 600;'>FastAPI ⚡ & Streamlit 🎈</p>
+            <p style='margin: 0; color: #6b7280; font-size: 0.9rem;'>Built with</p>
+            <p style='margin: 0; font-weight: 600; color: #1f2933;'>FastAPI ⚡ & Streamlit 🎈</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -1204,8 +1043,8 @@ with footer_col3:
     st.markdown(
         """
         <div style='text-align: center;'>
-            <p style='margin: 0; color: #9CA3AF; font-size: 0.9rem;'>Integrations</p>
-            <p style='margin: 0; font-weight: 600;'>Docker 🐳 & Notion 📝</p>
+            <p style='margin: 0; color: #6b7280; font-size: 0.9rem;'>Integrations</p>
+            <p style='margin: 0; font-weight: 600; color: #1f2933;'>Docker 🐳 & Notion 📝</p>
         </div>
         """,
         unsafe_allow_html=True,
