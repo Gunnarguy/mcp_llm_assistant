@@ -1,127 +1,346 @@
-# ====================================
-# SENSITIVE FILES - NEVER COMMIT!
-# ====================================
+# ==================================================================================
+# 🔐 SECRETS & CREDENTIALS - NEVER COMMIT THESE!
+# ==================================================================================
 .env
 .env.local
+.env.development
+.env.production
+.env.test
 .env.*.local
 *.key
 *.pem
 *.p12
 *.pfx
+*.crt
+*.cer
 secrets/
 credentials/
+.secrets/
+auth.json
+token.json
+service-account*.json
 
-# ====================================
-# RUNTIME FILES
-# ====================================
-# Logs
-*.log
-logs/
-backend.log
-frontend.log
+# API Keys & Tokens
+NOTION_TOKEN
+GOOGLE_API_KEY
+OPENAI_API_KEY
+ANTHROPIC_API_KEY
 
-# Process IDs
+# ==================================================================================
+# 📂 PROJECT-SPECIFIC RUNTIME FILES
+# ==================================================================================
+# Daemon PIDs
+runtime/
 *.pid
 backend.pid
+frontend.pid
+
+# Application Logs
+logs/
+*.log
+backend.log
+frontend.log
+llm_service.log
+docker_service.log
+app.log
+error.log
+access.log
+debug.log
+
+# Streamlit cache
+.streamlit/secrets.toml
+*.streamlit/
 
 # Temporary files
 *.tmp
 *.temp
 temp/
 tmp/
+cache/
+.cache/
 
-# ====================================
-# PYTHON
-# ====================================
+# ==================================================================================
+# 🐍 PYTHON
+# ==================================================================================
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
 
+# C extensions
+*.c
+*.cpp
+*.pyd
+
 # Virtual environments
 venv/
 env/
 ENV/
 .venv/
+.virtualenv/
+virtualenv/
+pipenv/
+poetry.lock
+Pipfile.lock
 
 # Distribution / packaging
 build/
+develop-eggs/
 dist/
-*.egg-info/
+downloads/
+eggs/
 .eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
 # PyInstaller
 *.manifest
 *.spec
 
-# Unit test / coverage
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
+.nox/
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.cache
+nosetests.xml
+test-results/
+pytest_cache/
 
-# ====================================
-# IDE / EDITORS
-# ====================================
+# MyPy type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# Pytype static type analyzer
+.pytype/
+
+# Ruff
+.ruff_cache/
+
+# ==================================================================================
+# 📦 DEPENDENCIES & PACKAGE MANAGERS
+# ==================================================================================
+# Node.js (if you add frontend build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ==================================================================================
+# 💻 IDE & EDITORS
+# ==================================================================================
 # VSCode
 .vscode/
+!.vscode/extensions.json
+!.vscode/settings.json.example
 *.code-workspace
 
 # PyCharm / IntelliJ
 .idea/
 *.iml
+*.iws
+*.ipr
+out/
 
 # Sublime Text
 *.sublime-project
 *.sublime-workspace
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
 
 # Vim
-*.swp
-*.swo
-*.swn
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+Session.vim
+Sessionx.vim
+.netrwhist
 *~
+tags
+[._]*.un~
 
 # Emacs
 *~
 \#*\#
 .\#*
+.dir-locals.el
 
-# ====================================
-# OPERATING SYSTEMS
-# ====================================
+# Eclipse
+.project
+.pydevproject
+.settings/
+
+# ==================================================================================
+# 🖥️  OPERATING SYSTEMS
+# ==================================================================================
 # macOS
 .DS_Store
 .AppleDouble
 .LSOverride
 ._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
 
 # Windows
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
-Desktop.ini
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
 
 # Linux
 .directory
 .Trash-*
+.nfs*
 
-# ====================================
-# JUPYTER NOTEBOOKS
-# ====================================
+# ==================================================================================
+# 📓 JUPYTER NOTEBOOKS
+# ==================================================================================
 .ipynb_checkpoints/
 *.ipynb
+*-checkpoint.ipynb
+.jupyter/
 
-# ====================================
-# DATABASE FILES
-# ====================================
+# ==================================================================================
+# 🗄️  DATABASES
+# ==================================================================================
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+*.sql
+local.db
 
-# ====================================
-# BACKUP FILES
-# ====================================
+# ==================================================================================
+# 📋 BACKUP & ARCHIVE FILES
+# ==================================================================================
 *.bak
 *.backup
+*.old
+*.orig
+*.swp
+*.swo
 *~
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
+# ==================================================================================
+# 🚀 DEPLOYMENT & CI/CD
+# ==================================================================================
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Docker
+.dockerignore.local
+docker-compose.override.yml
+.docker/
+
+# Kubernetes
+*.kubeconfig
+
+# ==================================================================================
+# 📊 MONITORING & PROFILING
+# ==================================================================================
+*.prof
+*.lprof
+.profiling/
+flame-graph.svg
+
+# ==================================================================================
+# 📚 DOCUMENTATION BUILD
+# ==================================================================================
+docs/_build/
+docs/.doctrees/
+site/
+.mkdocs/
+
+# ==================================================================================
+# 🧪 EXPERIMENTAL & SCRATCH
+# ==================================================================================
+scratch/
+experiments/
+playground/
+sandbox/
+test_files/
+*.test.py
+*.draft.*
+NOTES.md
+TODO.md
+SCRATCH.md
+
+# ==================================================================================
+# 🎨 FRONTEND BUILDS (if applicable)
+# ==================================================================================
+.next/
+out/
+.nuxt/
+dist/
+.parcel-cache/
+
+# ==================================================================================
+# 📱 MOBILE (if applicable)
+# ==================================================================================
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# ==================================================================================
+# END OF .gitignore - Keep your repo clean! 🧹
+# ==================================================================================

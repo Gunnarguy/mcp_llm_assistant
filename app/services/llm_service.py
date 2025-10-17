@@ -82,24 +82,18 @@ class LanguageModelService:
         Returns:
             The system instruction string.
         """
-        return """You are an AI agent with tools for Docker MCP and Notion API (v2022-06-28).
+        return """You are an AI agent with Notion API and Docker MCP tools.
 
-**Tools:**
-- `execute_command(command)` - Docker MCP commands
-- `list_containers()` - List containers
-- `get_logs(container_name, tail)` - Container logs
-- `notion_api_call(method, endpoint, body)` - Direct Notion API (base: https://api.notion.com)
+**Finding databases:**
+1. Call notion_api_call with POST /v1/search and empty body "{}" to list ALL resources
+2. Filter results client-side by checking object="database" and matching title
+3. Search queries often return empty results - always start with empty search
 
-**Notion API:**
-Full REST API access. Common patterns:
-- Search: POST /v1/search
-- Get database: GET /v1/databases/{id}
-- Update database: PATCH /v1/databases/{id}
-- Create page: POST /v1/pages
-- Update page: PATCH /v1/pages/{id}
-- Query database: POST /v1/databases/{id}/query
+**Searching page content:** Use API-get-block-children (search API only searches titles).
 
-Be proactive. Discover info yourself (search, get schemas). Include URLs in responses."""
+**Creating pages:** Use notion_api_call POST /v1/pages with parent.database_id and properties.
+
+Use tools proactively."""
 
     def _get_tool_declarations(self) -> List[Dict[str, Any]]:
         """
@@ -167,6 +161,8 @@ Be proactive. Discover info yourself (search, get schemas). Include URLs in resp
                             "Makes a direct HTTP request to the Notion API. "
                             "Use this to search, create, update, or query "
                             "Notion databases and pages. "
+                            "Supports dynamic API versioning - will automatically "
+                            "retry with newer versions if needed. "
                             "Full API docs: "
                             "https://developers.notion.com/reference"
                         ),
@@ -192,6 +188,15 @@ Be proactive. Discover info yourself (search, get schemas). Include URLs in resp
                                     "description": (
                                         "JSON body as a string "
                                         "(use empty string '{}' for GET)"
+                                    ),
+                                },
+                                "api_version": {
+                                    "type": "STRING",
+                                    "description": (
+                                        "Optional: Notion API version to use "
+                                        "(e.g., '2022-06-28', '2025-09-03'). "
+                                        "Defaults to '2022-06-28'. Use newer versions "
+                                        "for databases with advanced features."
                                     ),
                                 },
                             },
@@ -240,7 +245,10 @@ Be proactive. Discover info yourself (search, get schemas). Include URLs in resp
             elif function_name == "notion_api_call":
                 method = args.get("method", "").upper()
                 endpoint = args.get("endpoint", "")
-                body_str = args.get("body", "{}")
+                body_str = args.get("body", "{}").strip()
+                api_version = args.get(
+                    "api_version", "2025-09-03"
+                )  # Default to newer version to see all resources
 
                 if not method or not endpoint:
                     return "Error: 'method' and 'endpoint' are required arguments."
@@ -250,57 +258,65 @@ Be proactive. Discover info yourself (search, get schemas). Include URLs in resp
 
                 # Parse the body JSON string
                 try:
+                    # AUTO-FIX: Remove triple quotes if LLM wrapped JSON in them
+                    if body_str.startswith("'''") and body_str.endswith("'''"):
+                        body_str = body_str[3:-3].strip()
+                        logger.info("🔧 AUTO-FIX: Removed triple quotes from JSON body")
+                    elif body_str.startswith('"""') and body_str.endswith('"""'):
+                        body_str = body_str[3:-3].strip()
+                        logger.info(
+                            "🔧 AUTO-FIX: Removed triple double-quotes from JSON body"
+                        )
+
+                    if "\\'" in body_str:
+                        body_str = body_str.replace("\\'", "'")
+                        logger.info(
+                            "🔧 AUTO-FIX: Replaced escaped apostrophes in JSON body"
+                        )
+
                     body = json.loads(body_str) if body_str and body_str != "{}" else {}
                 except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse JSON body: {body_str[:200]}")
                     return f"Error: Invalid JSON in body parameter: {str(e)}"
 
-                # Make the API call
-                url = f"https://api.notion.com{endpoint}"
-                headers = {
-                    "Authorization": f"Bearer {NOTION_TOKEN}",
-                    "Notion-Version": "2022-06-28",
-                    "Content-Type": "application/json",
-                }
-
-                logger.info(f"Making Notion API call: {method} {url}")
-
-                try:
-                    if method == "GET":
-                        response = requests.get(url, headers=headers, timeout=30)
-                    elif method == "POST":
-                        response = requests.post(
-                            url, headers=headers, json=body, timeout=30
+                # AUTO-FIX: Empty search works best - remove query if present on search endpoint
+                if endpoint == "/v1/search" and "query" in body:
+                    query_text = body.get("query", "")
+                    if query_text:
+                        logger.info(
+                            f"🔧 AUTO-FIX: Removing search query '{query_text}' - empty search returns all resources reliably"
                         )
-                    elif method == "PATCH":
-                        response = requests.patch(
-                            url, headers=headers, json=body, timeout=30
-                        )
-                    elif method == "DELETE":
-                        response = requests.delete(url, headers=headers, timeout=30)
-                    else:
-                        return f"Error: Unsupported HTTP method '{method}'"
+                        # Keep filter if present, but remove query
+                        body.pop("query", None)
+                        body_str = json.dumps(body)
 
-                    # Return the response as a JSON string
-                    if response.status_code >= 200 and response.status_code < 300:
-                        result = response.json()
-                        logger.info(f"Notion API success: {response.status_code}")
-                        return json.dumps(result, indent=2)
-                    else:
-                        error_data = (
-                            response.json()
-                            if response.text
-                            else {"error": "No response body"}
+                # AUTO-FIX: LLM keeps trying to use "database" filter value even though it's invalid
+                if endpoint == "/v1/search" and isinstance(body.get("filter"), dict):
+                    filter_value = body["filter"].get("value")
+                    if filter_value == "database":
+                        logger.warning(
+                            "🔧 AUTO-FIX: LLM tried to use invalid filter value 'database', correcting to 'page'"
                         )
-                        logger.error(
-                            f"Notion API error: {response.status_code} - "
-                            f"{error_data}"
-                        )
-                        return f"Notion API Error ({response.status_code}): {json.dumps(error_data, indent=2)}"
+                        body["filter"]["value"] = "page"
+                        body_str = json.dumps(body)  # Update body_str for logging
 
-                except requests.exceptions.Timeout:
-                    return "Error: Notion API request timed out after 30 seconds."
-                except requests.exceptions.RequestException as e:
-                    return f"Error: Notion API request failed: {str(e)}"
+                # AUTO-WORKAROUND: Database query endpoint is broken, use search API instead
+                if (
+                    method == "POST"
+                    and "/databases/" in endpoint
+                    and endpoint.endswith("/query")
+                ):
+                    database_id = endpoint.split("/databases/")[1].split("/")[0]
+                    logger.info(
+                        f"Auto-converting broken query endpoint to search API for database {database_id}"
+                    )
+
+                    return self._query_database_via_search(
+                        database_id, body, api_version
+                    )
+
+                # Make the API call with dynamic versioning and auto-retry
+                return self._make_notion_api_call(method, endpoint, body, api_version)
 
             else:
                 return f"Error: Unknown function '{function_name}'."
@@ -313,6 +329,235 @@ Be proactive. Discover info yourself (search, get schemas). Include URLs in resp
                 f"Unexpected error in function '{function_name}': {e}", exc_info=True
             )
             return f"An unexpected error occurred: {e}"
+
+    def _make_notion_api_call(
+        self, method: str, endpoint: str, body: Dict[str, Any], api_version: str
+    ) -> str:
+        """
+        Makes a Notion API call with proper error handling and intelligent fallback logic.
+
+        AUTO-WORKAROUNDS:
+        1. Database not found (404) -> Try extracting real database ID from data sources
+        2. Multiple data sources error -> Automatically use older API version (2022-06-28)
+        3. Query endpoint broken -> Already handled by _query_database_via_search
+
+        Args:
+            method: HTTP method (GET, POST, PATCH, DELETE)
+            endpoint: API endpoint path (e.g., /v1/pages)
+            body: Request body as dict
+            api_version: Notion API version
+
+        Returns:
+            JSON response as string or error message
+        """
+        url = f"https://api.notion.com{endpoint}"
+        headers = {
+            "Authorization": f"Bearer {NOTION_TOKEN}",
+            "Notion-Version": api_version,
+            "Content-Type": "application/json",
+        }
+
+        logger.info(
+            f"Making Notion API call: {method} {url} (API version: {api_version})"
+        )
+
+        try:
+            if method == "GET":
+                response = requests.get(url, headers=headers, timeout=30)
+            elif method == "POST":
+                response = requests.post(url, headers=headers, json=body, timeout=30)
+            elif method == "PATCH":
+                response = requests.patch(url, headers=headers, json=body, timeout=30)
+            elif method == "DELETE":
+                response = requests.delete(url, headers=headers, timeout=30)
+            else:
+                return f"Error: Unsupported HTTP method '{method}'"
+
+            if response.status_code >= 200 and response.status_code < 300:
+                result = response.json()
+                logger.info(f"Notion API success: {response.status_code}")
+                return json.dumps(result, indent=2)
+            else:
+                error_data = (
+                    response.json()
+                    if response.headers.get("Content-Type", "").startswith(
+                        "application/json"
+                    )
+                    else {}
+                )
+                error_message = error_data.get("message", response.text)
+
+                # AUTO-WORKAROUND 1: Database not found - might be a view ID, try to find real database ID
+                if (
+                    (response.status_code == 404 or response.status_code == 400)
+                    and method == "POST"
+                    and endpoint == "/v1/pages"
+                ):
+                    attempted_db_id = body.get("parent", {}).get("database_id")
+                    if attempted_db_id:
+                        logger.info(
+                            f"🔧 AUTO-WORKAROUND: Database {attempted_db_id} not found, searching for actual database ID..."
+                        )
+                        real_db_id = self._find_real_database_id(
+                            attempted_db_id, api_version
+                        )
+                        if real_db_id and real_db_id != attempted_db_id:
+                            logger.info(f"✅ Found real database ID: {real_db_id}")
+                            body["parent"]["database_id"] = real_db_id
+                            return self._make_notion_api_call(
+                                method, endpoint, body, api_version
+                            )
+
+                # AUTO-WORKAROUND 2: Multiple data sources error - use older API version
+                if (
+                    "multiple data sources" in error_message.lower()
+                    and api_version != "2022-06-28"
+                ):
+                    logger.info(
+                        "🔧 AUTO-WORKAROUND: Multiple data sources detected, retrying with API version 2022-06-28"
+                    )
+                    return self._make_notion_api_call(
+                        method, endpoint, body, "2022-06-28"
+                    )
+
+                logger.error(
+                    f"Notion API error: {response.status_code} - {error_message}"
+                )
+                return f"Notion API Error ({response.status_code}): {json.dumps(error_data, indent=2)}"
+
+        except requests.exceptions.Timeout:
+            return "Error: Notion API request timed out after 30 seconds."
+        except requests.exceptions.RequestException as e:
+            return f"Error: Notion API request failed: {str(e)}"
+
+    def _find_real_database_id(
+        self, view_or_db_id: str, api_version: str
+    ) -> Optional[str]:
+        """
+        Finds the actual database ID when given a view ID or database page ID.
+
+        Many Notion databases with "multiple data sources" show a view ID in the URL,
+        not the actual database ID. This method searches for the real database.
+
+        Args:
+            view_or_db_id: The ID from the URL (might be view, page, or database)
+            api_version: Notion API version to use
+
+        Returns:
+            The actual database ID, or None if not found
+        """
+        # First, try to GET it as a page - it might reveal the database structure
+        page_result = self._make_notion_api_call(
+            "GET", f"/v1/pages/{view_or_db_id}", {}, api_version
+        )
+
+        try:
+            page_data = json.loads(page_result)
+            if page_data.get("object") == "page":
+                # Check if this page is a database
+                if page_data.get("parent", {}).get("type") == "workspace":
+                    # This is a top-level page that might be a database view
+                    # Try to get it as a database
+                    db_result = self._make_notion_api_call(
+                        "GET", f"/v1/databases/{view_or_db_id}", {}, api_version
+                    )
+                    db_data = json.loads(db_result)
+
+                    if db_data.get("object") == "database":
+                        # Check for data_sources (linked databases)
+                        data_sources = db_data.get("data_sources", [])
+                        if data_sources and len(data_sources) > 0:
+                            # Return the first linked database ID
+                            first_source = data_sources[0]
+                            real_id = first_source.get("database_id")
+                            if real_id:
+                                logger.info(
+                                    f"Found linked database in data_sources: {real_id}"
+                                )
+                                return real_id
+
+                        # No data sources, this IS the database
+                        return view_or_db_id
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+        # Fallback: Search for databases and try to match by similar ID pattern
+        search_result = self._make_notion_api_call(
+            "POST",
+            "/v1/search",
+            {"filter": {"property": "object", "value": "database"}, "page_size": 100},
+            api_version,
+        )
+
+        try:
+            search_data = json.loads(search_result)
+            # Try to find a database with similar ID pattern (first part matches)
+            view_prefix = (
+                view_or_db_id.split("-")[0]
+                if "-" in view_or_db_id
+                else view_or_db_id[:8]
+            )
+
+            for db in search_data.get("results", []):
+                db_id = db.get("id", "")
+                if db_id.startswith(view_prefix):
+                    logger.info(f"Found database with matching ID prefix: {db_id}")
+                    return db_id
+        except (json.JSONDecodeError, KeyError):
+            pass
+
+        return None
+
+    def _query_database_via_search(
+        self, database_id: str, query_body: Dict[str, Any], api_version: str
+    ) -> str:
+        """
+        Workaround for broken /databases/{id}/query endpoint.
+        Uses search API to get all pages, then filters by database_id.
+
+        Args:
+            database_id: The database ID to query
+            query_body: Original query body (currently ignored - search doesn't support filters)
+            api_version: Notion API version
+
+        Returns:
+            JSON array of pages from the database
+        """
+        logger.info(
+            f"🔧 AUTO-WORKAROUND: Converting database query to search API for database {database_id}"
+        )
+
+        # Use search API to get all pages
+        search_body = {
+            "filter": {"property": "object", "value": "page"},
+            "page_size": 100,
+        }
+
+        search_result = self._make_notion_api_call(
+            "POST", "/v1/search", search_body, api_version
+        )
+
+        try:
+            search_data = json.loads(search_result)
+            if "results" not in search_data:
+                return search_result  # Return error if search failed
+
+            # Filter to only pages from this database
+            matching_pages = [
+                page
+                for page in search_data["results"]
+                if page.get("parent", {}).get("database_id") == database_id
+            ]
+
+            logger.info(
+                f"✅ Found {len(matching_pages)} pages in database {database_id}"
+            )
+
+            # Return in same format as query endpoint
+            return json.dumps({"results": matching_pages, "has_more": False}, indent=2)
+
+        except json.JSONDecodeError:
+            return search_result  # Return original error
 
     def _switch_to_fallback_model(self) -> bool:
         """

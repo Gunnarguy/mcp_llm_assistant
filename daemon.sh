@@ -39,14 +39,23 @@ start_backend() {
     cd "$SCRIPT_DIR"
     nohup "$UVICORN_BIN" app.main:app --host 0.0.0.0 --port 8000 >> "$BACKEND_LOG" 2>&1 &
     echo $! > "$BACKEND_PID_FILE"
-    sleep 2
 
-    if curl -s http://127.0.0.1:8000/health > /dev/null; then
-        echo "✅ Backend running (PID: $(cat $BACKEND_PID_FILE))"
-    else
-        echo "❌ Backend failed to start - check logs: $BACKEND_LOG"
-        return 1
-    fi
+    # Wait up to 120 seconds for backend to become healthy (startup can take ~2 minutes)
+    echo "⏳ Waiting for backend to start (this may take up to 2 minutes)..."
+    for i in {1..60}; do
+        sleep 2
+        if curl -s http://127.0.0.1:8000/health > /dev/null 2>&1; then
+            echo "✅ Backend running (PID: $(cat $BACKEND_PID_FILE)) - took $((i*2)) seconds"
+            return 0
+        fi
+        if ! ps -p $(cat $BACKEND_PID_FILE) > /dev/null 2>&1; then
+            echo "❌ Backend process died - check logs: $BACKEND_LOG"
+            return 1
+        fi
+    done
+
+    echo "❌ Backend failed to respond after 120 seconds - check logs: $BACKEND_LOG"
+    return 1
 }
 
 start_frontend() {
@@ -68,7 +77,7 @@ start_frontend() {
 
     echo "🎨 Starting frontend daemon..."
     cd "$SCRIPT_DIR"
-    nohup "$STREAMLIT_BIN" run frontend/chat_ui.py --server.port 8501 --server.headless true >> "$FRONTEND_LOG" 2>&1 &
+    nohup "$STREAMLIT_BIN" run frontend/chat_ui.py --server.port 8501 --server.address 0.0.0.0 --server.headless true >> "$FRONTEND_LOG" 2>&1 &
     echo $! > "$FRONTEND_PID_FILE"
     sleep 2
     echo "✅ Frontend running (PID: $(cat $FRONTEND_PID_FILE))"
@@ -122,6 +131,26 @@ stop_frontend() {
         echo "🧹 Cleaning up orphaned frontend processes..."
         echo "$ORPHANS" | xargs kill -9 2>/dev/null
     fi
+}
+
+clear_logs() {
+    echo "🧹 Clearing old logs..."
+
+    # Clear application logs (truncate to empty)
+    : > "$SCRIPT_DIR/logs/llm_service.log" 2>/dev/null || true
+    : > "$SCRIPT_DIR/logs/docker_service.log" 2>/dev/null || true
+    : > "$SCRIPT_DIR/logs/app.log" 2>/dev/null || true
+
+    # Truncate daemon logs (keep last 1000 lines only)
+    if [ -f "$BACKEND_LOG" ]; then
+        tail -1000 "$BACKEND_LOG" > "$BACKEND_LOG.tmp" 2>/dev/null && mv "$BACKEND_LOG.tmp" "$BACKEND_LOG" 2>/dev/null || true
+    fi
+
+    if [ -f "$FRONTEND_LOG" ]; then
+        tail -1000 "$FRONTEND_LOG" > "$FRONTEND_LOG.tmp" 2>/dev/null && mv "$FRONTEND_LOG.tmp" "$FRONTEND_LOG" 2>/dev/null || true
+    fi
+
+    echo "✅ Logs cleared"
 }
 
 show_status() {
@@ -195,6 +224,7 @@ case "$1" in
         echo ""
         stop_backend
         stop_frontend
+        clear_logs
         sleep 2  # Give ports time to fully release
         start_backend
         start_frontend

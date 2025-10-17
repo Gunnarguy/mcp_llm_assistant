@@ -191,6 +191,38 @@ class TestFunctionExecution:
         assert "Error" in result
         assert "Connection failed" in result
 
+    @patch("app.services.llm_service.NOTION_TOKEN", "test-token")
+    @patch("app.services.llm_service.GOOGLE_API_KEY", "test-api-key")
+    @patch("app.services.llm_service.genai.configure")
+    @patch("app.services.llm_service.genai.GenerativeModel")
+    @patch("app.services.llm_service.get_docker_service")
+    def test_notion_api_call_unescapes_apostrophes(
+        self, mock_docker, mock_model, mock_configure
+    ):
+        """Ensure notion_api_call handles stray escaped apostrophes."""
+        mock_docker_instance = Mock()
+        mock_docker.return_value = mock_docker_instance
+
+        service = LanguageModelService()
+
+        body = """{"properties": {"Description": {"rich_text": [{"text": {"content": "We\\'re excited"}}]}}}"""
+
+        with patch.object(
+            service, "_make_notion_api_call", return_value="ok"
+        ) as mock_call:
+            result = service._execute_function_call(
+                "notion_api_call",
+                {"method": "POST", "endpoint": "/v1/pages", "body": body},
+            )
+
+        assert result == "ok"
+
+        passed_body = mock_call.call_args[0][2]
+        content = passed_body["properties"]["Description"]["rich_text"][0]["text"][
+            "content"
+        ]
+        assert content == "We're excited"
+
 
 class TestResponseGeneration:
     """Test suite for response generation with agentic loop."""
