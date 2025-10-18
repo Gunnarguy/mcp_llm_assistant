@@ -8,10 +8,24 @@ BACKEND_PID_FILE="$SCRIPT_DIR/runtime/backend.pid"
 FRONTEND_PID_FILE="$SCRIPT_DIR/runtime/frontend.pid"
 BACKEND_LOG="$SCRIPT_DIR/logs/backend.log"
 FRONTEND_LOG="$SCRIPT_DIR/logs/frontend.log"
+PREFLIGHT_SCRIPT="$SCRIPT_DIR/preflight_check.sh"
 
 # Create runtime directories if they don't exist
 mkdir -p "$SCRIPT_DIR/runtime"
 mkdir -p "$SCRIPT_DIR/logs"
+
+# Run preflight checks before starting (only for 'start' and 'restart' commands)
+run_preflight_check() {
+    if [ -f "$PREFLIGHT_SCRIPT" ]; then
+        echo "🔍 Running pre-flight checks..."
+        if ! "$PREFLIGHT_SCRIPT"; then
+            echo "❌ Pre-flight checks failed. System cannot start safely."
+            echo "   Fix errors above and try again."
+            exit 1
+        fi
+        echo ""
+    fi
+}
 
 # Use pyenv Python directly instead of broken venv
 PYTHON_BIN="/Users/gunnarhostetler/.pyenv/versions/3.12.9/bin/python"
@@ -202,6 +216,7 @@ show_status() {
 
 case "$1" in
     start)
+        run_preflight_check  # ← NEW: Validate before starting
         echo "🚀 Starting MCP Assistant daemons..."
         echo ""
         start_backend
@@ -211,7 +226,8 @@ case "$1" in
         echo "   Backend:  http://127.0.0.1:8000"
         echo "   Frontend: http://localhost:8501"
         echo ""
-        echo "Run './daemon.sh status' to check status"
+        echo "💡 Optional: Run './watchdog.sh' to auto-recover from failures"
+        echo "   Run './daemon.sh status' to check status"
         ;;
     stop)
         echo "🛑 Stopping MCP Assistant daemons..."
@@ -220,6 +236,7 @@ case "$1" in
         stop_frontend
         ;;
     restart)
+        run_preflight_check  # ← NEW: Validate before restarting
         echo "🔄 Restarting MCP Assistant daemons..."
         echo ""
         stop_backend
@@ -232,8 +249,17 @@ case "$1" in
     status)
         show_status
         ;;
+    check)
+        # NEW: Manual preflight check
+        if [ -f "$PREFLIGHT_SCRIPT" ]; then
+            "$PREFLIGHT_SCRIPT"
+        else
+            echo "❌ Preflight check script not found"
+            exit 1
+        fi
+        ;;
     *)
-        echo "Usage: $0 {start|stop|restart|status}"
+        echo "Usage: $0 {start|stop|restart|status|check}"
         echo ""
         echo "Commands:"
         echo "  start   - Start backend and frontend daemons"
